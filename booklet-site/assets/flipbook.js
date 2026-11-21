@@ -8,6 +8,8 @@
   var status=document.getElementById('page-status');
   var progress=document.getElementById('page-progress');
   var progressFill=document.getElementById('progress-fill');
+  var soundButton=document.getElementById('sound-toggle');
+  var soundLabel=document.getElementById('sound-label');
   if(!stage||!pages.length||!previous||!next||!status||!progress||!progressFill)return;
 
   var current=0;
@@ -17,10 +19,22 @@
   var reducedMotion=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var turnDuration=reducedMotion?0:160;
   var bookName=document.body.getAttribute('data-book-name')||'الإصدار';
+  var PageAudio=window.AudioContext||window.webkitAudioContext;
+  var audioContext=null;
+  var noiseBuffer=null;
+  var soundEnabled=!!PageAudio;
 
   function digits(number){
     try{return new Intl.NumberFormat('ar-EG').format(number);}
     catch(error){return String(number);}
+  }
+
+  function updateSoundControl(){
+    if(!soundButton)return;
+    soundButton.setAttribute('aria-pressed',String(soundEnabled));
+    soundButton.setAttribute('aria-label',soundEnabled?'كتم صوت تقليب الصفحات':'تشغيل صوت تقليب الصفحات');
+    soundButton.title=soundEnabled?'كتم صوت تقليب الصفحات':'تشغيل صوت تقليب الصفحات';
+    if(soundLabel)soundLabel.textContent=soundEnabled?'الصوت: يعمل':'الصوت: مكتوم';
   }
 
   function updateControls(){
@@ -46,18 +60,63 @@
     try{window.history.replaceState(null,'',window.location.pathname+window.location.search+'#page-'+(index+1));}catch(error){}
   }
 
+  function audioReady(){
+    if(!PageAudio)return Promise.resolve(null);
+    try{if(!audioContext)audioContext=new PageAudio();}
+    catch(error){return Promise.resolve(null);}
+    if(audioContext.state==='suspended')return audioContext.resume().then(function(){return audioContext;}).catch(function(){return null;});
+    return Promise.resolve(audioContext);
+  }
+
+  function makePageNoise(context){
+    if(noiseBuffer)return noiseBuffer;
+    var duration=.42;
+    var length=Math.floor(context.sampleRate*duration);
+    var buffer=context.createBuffer(1,length,context.sampleRate);
+    var samples=buffer.getChannelData(0);
+    for(var i=0;i<length;i++){
+      var time=i/context.sampleRate;
+      var attack=Math.min(1,time/.012);
+      var first=Math.exp(-Math.pow((time-.055)/.043,2));
+      var second=.72*Math.exp(-Math.pow((time-.18)/.067,2));
+      var tail=.4*Math.exp(-Math.pow((time-.32)/.05,2));
+      samples[i]=(Math.random()*2-1)*attack*(first+second+tail)*.7;
+    }
+    noiseBuffer=buffer;
+    return buffer;
+  }
+
+  function playPageTurnSound(){
+    if(!soundEnabled||!PageAudio)return;
+    audioReady().then(function(context){
+      if(!context||!soundEnabled)return;
+      try{
+        var source=context.createBufferSource();
+        var high=context.createBiquadFilter();
+        var low=context.createBiquadFilter();
+        var gain=context.createGain();
+        source.buffer=makePageNoise(context);
+        high.type='highpass';high.frequency.value=340;
+        low.type='lowpass';low.frequency.value=6200;
+        gain.gain.value=.48;
+        source.connect(high);high.connect(low);low.connect(gain);gain.connect(context.destination);
+        source.start();
+      }catch(error){/* Audio is optional; page navigation always remains available. */}
+    }).catch(function(){});
+  }
+
   function turnTo(index){
     if(turning||index<0||index>=pages.length||index===current)return;
+    playPageTurnSound();
     if(turnDuration===0){
       reflectPage(index);
       if(stage.scrollIntoView)stage.scrollIntoView({behavior:'auto',block:'start'});
       return;
     }
 
-    var oldIndex=current;
-    var oldPage=pages[oldIndex];
+    var oldPage=pages[current];
     var newPage=pages[index];
-    var direction=index>oldIndex?'forward':'backward';
+    var direction=index>current?'forward':'backward';
     turning=true;
     updateControls();
     oldPage.classList.add('turning-'+direction);
@@ -84,6 +143,23 @@
 
   previous.addEventListener('click',function(){turnTo(current-1);});
   next.addEventListener('click',function(){turnTo(current+1);});
+  if(soundButton){
+    if(!PageAudio){
+      soundEnabled=false;
+      soundButton.disabled=true;
+      soundButton.title='الصوت غير مدعوم في هذا المتصفح';
+      soundButton.setAttribute('aria-label','الصوت غير مدعوم في هذا المتصفح');
+      if(soundLabel)soundLabel.textContent='الصوت غير متاح';
+    }else{
+      soundButton.addEventListener('click',function(){
+        soundEnabled=!soundEnabled;
+        updateSoundControl();
+        if(soundEnabled)audioReady();
+      });
+      updateSoundControl();
+    }
+  }
+
   stage.addEventListener('click',function(event){
     if(event.target.closest('.page-image'))stage.focus({preventScroll:true});
   });
