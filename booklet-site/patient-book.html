@@ -39,24 +39,15 @@
       <span class="audiobook-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 10v4h4l5 4V6l-5 4H4Z"/><path d="M16 9a5 5 0 0 1 0 6m2-9a9 9 0 0 1 0 12"/></svg></span>
       <div><h2 id="audiobook-title">استمع إلى كتيّب المريض كاملًا</h2><p>تسجيل بصوت رجالي باللهجة المصرية، يشمل المحتوى والمحاذير وموانع الاستخدام والأسئلة الشائعة.</p></div>
     </div>
-    <audio id="patient-full-audio" controls preload="none" aria-label="مشغّل التسجيل الصوتي الكامل لكتيّب المريض باللهجة المصرية">
+    <audio id="patient-full-audio" src="assets/audio/patient-guide-ar-eg.mp3" controls preload="none" aria-label="مشغّل ملف التسجيل الصوتي المتصل لكتيّب المريض باللهجة المصرية">
       يدعم متصفحك تشغيل الصوتيات؛ ابدأ الاستماع من زر «ابدأ الاستماع».
     </audio>
     <button class="audiobook-play" id="patient-audio-play" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7V5Z"/></svg><span id="patient-audio-play-label">ابدأ الاستماع إلى الكتيّب كاملًا</span></button>
-    <p class="audiobook-status" id="patient-audio-status" role="status" aria-live="polite">اضغط زر البدء لتحميل التسجيل؛ وبعدها استخدم مشغّل الصوت للإيقاف المؤقت واختيار موضع الاستماع.</p>
+    <p class="audiobook-status" id="patient-audio-status" role="status" aria-live="polite">ملف واحد متصل بصوت رجالي باللهجة المصرية. اضغط زر البدء، أو استخدم مشغّل الصوت للتنقل بين مواضع التسجيل.</p>
   </section>
-  <div class="reader-hint"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.5A2.5 2.5 0 0 1 7.5 3H20v16H7.5A2.5 2.5 0 0 0 5 21V5.5Z"/><path d="M5 18.5A2.5 2.5 0 0 1 7.5 16H20M9 7h7M9 10h7M9 13h4"/></svg><span class="reader-hint-copy">اضغط على سطر لقراءته وتظليله. الأخضر للمعلومات العامة غير التحذيرية، والبرتقالي للمحاذير ويُسمع تنبيه قبل قراءتها. التلوين إرشادي ولا يغني عن استشارة الصيدلي. اضغط صفوف الجداول لقراءتها واسحب على الهاتف للتقليب.</span><button class="page-read-toggle" id="page-read-toggle" type="button" aria-label="استمع إلى نص الصفحة الحالية" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4h4l5 4V6l-5 4H4Z"/><path d="M16 9a5 5 0 0 1 0 6m2-9a9 9 0 0 1 0 12"/></svg><span id="page-read-label">استمع إلى الصفحة</span></button>
+  <div class="reader-hint"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.5A2.5 2.5 0 0 1 7.5 3H20v16H7.5A2.5 2.5 0 0 0 5 21V5.5Z"/><path d="M5 18.5A2.5 2.5 0 0 1 7.5 16H20M9 7h7M9 10h7M9 13h4"/></svg><span class="reader-hint-copy">اضغط على سطر لتظليله وتشغيل مقطع مرتبط به من التسجيل المتصل بصوت رجالي مصري؛ والزر يشغّل مقطع الصفحة. الأخضر للمعلومات العامة، والبرتقالي للمحاذير مع تنبيه صوتي. التلوين إرشادي ولا يغني عن استشارة الصيدلي. اضغط صفوف الجداول للتظليل والاستماع، واسحب على الهاتف للتقليب.</span><button class="page-read-toggle" id="page-read-toggle" type="button" aria-label="استمع إلى التسجيل المرتبط بالصفحة الحالية" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4h4l5 4V6l-5 4H4Z"/><path d="M16 9a5 5 0 0 1 0 6m2-9a9 9 0 0 0 0 12"/></svg><span id="page-read-label">استمع إلى تسجيل الصفحة</span></button>
   </div>
   <div class="reader-safety-legend" aria-label="دليل ألوان التظليل"><span class="safety-legend-item"><i class="safety-dot safety-dot-safe" aria-hidden="true"></i>معلومة عامة / غير تحذيرية</span><span class="safety-legend-item"><i class="safety-dot safety-dot-caution" aria-hidden="true"></i>تحذير أو يلزم الحذر</span></div>
-  <details class="speech-settings">
-    <summary>تحسين الصوت وسرعة القراءة</summary>
-    <div class="speech-settings-panel">
-      <label class="speech-setting" for="speech-voice-ar"><span>الصوت العربي</span><select id="speech-voice-ar" dir="auto"><option value="auto">أفضل صوت عربي متاح تلقائيًا</option></select></label>
-      <label class="speech-setting" for="speech-voice-en"><span>الصوت الإنجليزي</span><select id="speech-voice-en" dir="auto"><option value="auto">أفضل صوت متاح تلقائيًا</option></select></label>
-      <label class="speech-setting speech-rate-setting" for="speech-rate"><span>سرعة القراءة <output id="speech-rate-value">0.90×</output></span><input id="speech-rate" type="range" min="75" max="110" step="5" value="90"></label>
-      <p class="speech-settings-note" id="speech-settings-note" aria-live="polite">يُفضّل الوضع التلقائي صوتًا مطابقًا للغة والمنطقة، مع إعطاء الأولوية للأصوات Natural أو Neural المتاحة. تعتمد الجودة الفعلية على الجهاز والمتصفح.</p>
-    </div>
-  </details>
   <p class="visually-hidden" id="page-highlight-status" aria-live="polite" aria-atomic="true"></p>
   <section class="reader-discovery" aria-label="أدوات استكشاف الكتيّب">
     <div class="reader-tool-row">
