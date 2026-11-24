@@ -22,6 +22,11 @@
   var highlightStatus=document.getElementById('page-highlight-status');
   var pageReadButton=document.getElementById('page-read-toggle');
   var pageReadLabel=document.getElementById('page-read-label');
+  var arabicVoiceSelect=document.getElementById('speech-voice-ar');
+  var englishVoiceSelect=document.getElementById('speech-voice-en');
+  var speechRateInput=document.getElementById('speech-rate');
+  var speechRateValue=document.getElementById('speech-rate-value');
+  var speechSettingsNote=document.getElementById('speech-settings-note');
   var speechSynthesis=window.speechSynthesis||null;
   var SpeechUtterance=window.SpeechSynthesisUtterance||null;
   var readingMap={};
@@ -47,6 +52,20 @@
   var soundEnabled=!!PageAudio;
   var speechActive=false;
   var speechSession=0;
+  var speechRequest=0;
+  var warningSoundTimer=null;
+  var warningSoundToken=0;
+  var warningOscillators=[];
+  var warningSoundResolve=null;
+  var availableSpeechVoices=[];
+  var speechVoicePreferences={ar:'auto',en:'auto'};
+  var speechRate=.9;
+  try{
+    speechVoicePreferences.ar=window.localStorage.getItem('phyto-booklet-voice-ar')||'auto';
+    speechVoicePreferences.en=window.localStorage.getItem('phyto-booklet-voice-en')||'auto';
+    var storedRate=Number(window.localStorage.getItem('phyto-booklet-speech-rate'));
+    if(storedRate>=.75&&storedRate<=1.1)speechRate=Math.round(storedRate*20)/20;
+  }catch(error){}
   var searchIndex=[];
   var activeHighlight=null;
   var highlightAnnouncementTimer=null;
@@ -158,13 +177,15 @@
     },30);
   }
 
-  function showHighlight(visual,geometry,label,pageNumber,button){
+  function showHighlight(visual,geometry,label,pageNumber,button,safety){
     if(activeHighlight){
       activeHighlight.visual.classList.remove('has-highlight');
       if(activeHighlight.button)activeHighlight.button.setAttribute('aria-pressed','false');
     }
     var layer=visual.querySelector('.page-selection-highlight');
     if(!layer)return;
+    var safetyLevel=safety||'info';
+    layer.setAttribute('data-safety',safetyLevel);
     layer.style.left=geometry.left+'%';
     layer.style.top=geometry.top+'%';
     layer.style.width=geometry.width+'%';
@@ -174,8 +195,9 @@
     visual.classList.add('has-highlight');
     if(button)button.setAttribute('aria-pressed','true');
     activeHighlight={visual:visual,button:button||null};
-    announceHighlight('تم تظليل '+label+' في صفحة '+digits(pageNumber)+'.');
-    playSelectionSound();
+    var safetyNotice=safetyLevel==='caution'?'تحذير يحتاج إلى الحذر':(safetyLevel==='safe'?'معلومة عامة غير تحذيرية':'معلومة عامة');
+    announceHighlight('تم تظليل '+label+'، '+safetyNotice+'، في صفحة '+digits(pageNumber)+'.');
+    if(safetyLevel!=='caution')playSelectionSound();
   }
 
   function selectAtPoint(visual,image,clientX,clientY,pageNumber){
@@ -187,7 +209,7 @@
     var centerY=Math.max(0,Math.min(100,((clientY-rect.top)/rect.height)*100));
     var left=Math.max(0,Math.min(100-width,centerX-width/2));
     var top=Math.max(0,Math.min(100-height,centerY-height/2));
-    showHighlight(visual,{left:left,top:top,width:width,height:height},'المعلومة في الموضع المحدد',pageNumber,null);
+    showHighlight(visual,{left:left,top:top,width:width,height:height},'المعلومة في الموضع المحدد',pageNumber,null,'info');
   }
 
   function pageReadingData(image){
@@ -232,8 +254,10 @@
   function selectReadingAtPoint(visual,image,clientX,clientY,pageNumber){
     var hit=nearestReadingSegment(image,clientX,clientY);
     if(!hit){selectAtPoint(visual,image,clientX,clientY,pageNumber);return;}
-    showHighlight(visual,readingHighlightGeometry(hit.data,hit.segment),'السطر المحدد',pageNumber,null);
-    speakText(hit.segment[4]);
+    var text=hit.segment[4];
+    var safety=safetyForText(text);
+    showHighlight(visual,readingHighlightGeometry(hit.data,hit.segment),'السطر المحدد',pageNumber,null,safety);
+    readText(text,safety);
   }
 
   function speechLanguage(text){
@@ -242,20 +266,158 @@
     return arabic&&arabic>=latin*.55?'ar-EG':'en-US';
   }
 
+  var cautionTextPattern=/(?:تحذير|احذر|حذر|محاذير|موانع|ممنوع|ممنوعة|تمنع[^.!?؟]{0,45}(?:الفئات|الرضيع|الأطفال|الحمل|الرضاعة|الاستخدام|الاستعمال|الوجه|الأنف|التناول)|لا\s+يمنع|يمنع\s+(?:قطف|غلي|تناول|استخدام|استعمال|قرب|الخلط|الجمع|البلع)|منع\s+(?:الاستعمال|التناول|الخلط)|تجنب|خطر|خطير|ضرر|مخاطر|خطورة|سمية|سام|تسمم|(?:الأعراض|أعراض)\s+(?:ال)?جانبية|(?:الآثار|آثار)\s+(?:ال)?جانبية|(?:الأثر|أثر)\s+(?:ال)?جانبي|تفاعلات|تداخلات|يتعارض|نزيف|سيولة|حصوات|حساسي|حمل|حامل|رضاع|رضيع|رضع|الأطفال|أطفال|طفل|الجرعة\s+السامة|جرعة\s+زائدة|قبل\s+العمليات|الجراحة|ارتجاع|توقف\s+عن|لا\s+تجمع|لا\s+تخلط|لا\s+(?:تستخدم|تستعمل|يستخدم|يستعمل|تتناول|يتناول|تأخذ|يأخذ)|لا\s+ينصح|غير\s+موصى|استشر\s+(?:طبيب|صيدلي)|اسأل\s+(?:الطبيب|الصيدلي)|مياه\s+زرقاء|ضغط\s+العين|ضغط\s+عين|الجلوكوما|أمراض|مرض|مزمن|سكري|قلب|كبد|كلى|كلية|بروستاتا|صرع|قرحة|ضغط\s+الدم|prostat|diabetes|cardiac|renal|hepatic|liver|kidney|ulcer|chronic|disease|cardiovascular|asthma|anticoagulant|warfarin|aspirin|clopidogrel|dabigatran|nsaids|post[-\s]?op|do\s+not\s+(?:use|take|apply|ingest|combine|mix)|contraindicat|warning|caution|avoid|unsafe|risk|toxic|bleed|hemorrhag|interaction|adverse|side\s+effect|allerg|pregnan|lactat|infant|child|danger|poison|overdose|fatal|surger|glaucoma|reflux|seizure|critical|high[-\s]risk|narrow\s+therapeutic\s+index)/i;
+
+  function safetyForText(value){
+    return cautionTextPattern.test(String(value||''))?'caution':'safe';
+  }
+
+  function prepareSpeechText(value){
+    return String(value||'')
+      .replace(/[\u200e\u200f\u202a-\u202e\u2066-\u2069\uFE0E\uFE0F\u200D]/g,' ')
+      .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu,' ')
+      .replace(/[•▪◦✦✧]/g,' ')
+      .replace(/[→⇒]/g,', ')
+      .replace(/×/g,' cross ')
+      .replace(/[\u00a0\t\r\n]+/g,' ')
+      .replace(/\s+/g,' ')
+      .replace(/([!?؟؛،])\1+/g,'$1')
+      .trim();
+  }
+
   function splitSpeechText(value){
-    var remaining=String(value||'').replace(/[\u200e\u200f\u202a-\u202e\u2066-\u2069]/g,'').replace(/\s+/g,' ').trim();
+    var remaining=prepareSpeechText(value);
     var chunks=[];
-    var maxLength=220;
+    var maxLength=185;
     while(remaining.length>maxLength){
       var cut=remaining.lastIndexOf(' ',maxLength);
-      var punctuation=remaining.slice(90,maxLength).search(/[.!?؟؛،;:](?:\s|$)/);
-      if(punctuation>=0)cut=90+punctuation+1;
-      if(cut<80)cut=maxLength;
+      var punctuation=remaining.slice(65,maxLength).search(/[.!?؟؛،;:](?:\s|$)/);
+      if(punctuation>=0)cut=65+punctuation+1;
+      if(cut<55)cut=maxLength;
       chunks.push(remaining.slice(0,cut).trim());
       remaining=remaining.slice(cut).trim();
     }
     if(remaining)chunks.push(remaining);
     return chunks;
+  }
+
+  function normalizeVoiceLanguage(voice){
+    return String(voice&&voice.lang||'').toLowerCase().replace(/_/g,'-');
+  }
+
+  function speechVoiceKey(voice){
+    return [String(voice&&voice.voiceURI||''),normalizeVoiceLanguage(voice),String(voice&&voice.name||'')].join('|');
+  }
+
+  function readBrowserVoices(){
+    if(!speechSynthesis||typeof speechSynthesis.getVoices!=='function')return [];
+    try{return(speechSynthesis.getVoices()||[]).filter(function(voice){return /^(ar|en)(?:-|$)/i.test(normalizeVoiceLanguage(voice));});}
+    catch(error){return[];}
+  }
+
+  function voiceQualityScore(voice,locale){
+    var lang=normalizeVoiceLanguage(voice);
+    var prefix=locale.slice(0,2).toLowerCase();
+    var name=(String(voice.name||'')+' '+String(voice.voiceURI||'')).toLowerCase();
+    var score=lang===locale.toLowerCase()?1000:(lang.indexOf(prefix)===0?500:0);
+    if(/natural|neural|online|premium|enhanced|wavenet|studio|expressive|high[-\s]quality/.test(name))score+=30;
+    if(/compact|legacy|espeak|robotic/.test(name))score-=20;
+    if(voice.localService===false)score+=5;
+    if(voice.default)score+=1;
+    return score;
+  }
+
+  function orderedVoicesFor(locale){
+    var prefix=locale.slice(0,2).toLowerCase();
+    return readBrowserVoices().filter(function(voice){return normalizeVoiceLanguage(voice).indexOf(prefix)===0;})
+      .sort(function(a,b){return voiceQualityScore(b,locale)-voiceQualityScore(a,locale);});
+  }
+
+  function populateVoiceSelect(select,language,locale,autoLabel){
+    if(!select)return;
+    var selected=speechVoicePreferences[language]||'auto';
+    var voices=orderedVoicesFor(locale);
+    select.textContent='';
+    var automatic=document.createElement('option');
+    automatic.value='auto';
+    automatic.textContent=autoLabel;
+    select.appendChild(automatic);
+    voices.forEach(function(voice){
+      var option=document.createElement('option');
+      option.value=speechVoiceKey(voice);
+      option.textContent=(voice.name||voice.lang||'صوت')+' — '+(voice.lang||'');
+      select.appendChild(option);
+    });
+    var hasSavedVoice=selected==='auto'||voices.some(function(voice){return speechVoiceKey(voice)===selected;});
+    if(!hasSavedVoice&&voices.length){
+      selected='auto';
+      speechVoicePreferences[language]='auto';
+      storeSpeechPreference('phyto-booklet-voice-'+language,'auto');
+    }
+    select.value=hasSavedVoice?selected:'auto';
+    select.disabled=!voices.length;
+  }
+
+  function refreshSpeechVoiceControls(){
+    availableSpeechVoices=readBrowserVoices();
+    populateVoiceSelect(arabicVoiceSelect,'ar','ar-EG','أفضل صوت عربي تلقائيًا');
+    populateVoiceSelect(englishVoiceSelect,'en','en-US','أفضل صوت إنجليزي تلقائيًا');
+    if(speechSettingsNote){
+      var note=availableSpeechVoices.length
+        ?'يختار الوضع التلقائي الصوت الأقرب للغة ويفضّل Natural أو Neural إن وُجد. جودة الصوت تعتمد على الجهاز والمتصفح.'
+        :'لا يوفّر المتصفح قائمة أصوات إضافية؛ ستُستخدم قراءته الافتراضية.';
+      if(availableSpeechVoices.length&&!orderedVoicesFor('ar-EG').length)note+=' لا يظهر صوت عربي في القائمة؛ سيحاول المتصفح استخدام صوته الافتراضي.';
+      if(availableSpeechVoices.length&&!orderedVoicesFor('en-US').length)note+=' لا يظهر صوت إنجليزي في القائمة؛ سيحاول المتصفح استخدام صوته الافتراضي.';
+      speechSettingsNote.textContent=note;
+    }
+  }
+
+  function preferredSpeechVoice(locale){
+    availableSpeechVoices=readBrowserVoices();
+    var language=locale.slice(0,2).toLowerCase();
+    var key=speechVoicePreferences[language]||'auto';
+    if(key!=='auto'){
+      var selected=availableSpeechVoices.filter(function(voice){return speechVoiceKey(voice)===key;})[0];
+      if(selected)return selected;
+    }
+    return orderedVoicesFor(locale)[0]||null;
+  }
+
+  function storeSpeechPreference(key,value){
+    try{window.localStorage.setItem(key,value);}catch(error){}
+  }
+
+  function initializeSpeechSettings(){
+    if(speechRateInput){
+      speechRateInput.value=String(Math.round(speechRate*100));
+      if(speechRateValue)speechRateValue.textContent=speechRate.toFixed(2)+'×';
+      speechRateInput.addEventListener('input',function(){
+        var value=Number(speechRateInput.value)/100;
+        if(value<.75||value>1.1)return;
+        speechRate=value;
+        if(speechRateValue)speechRateValue.textContent=speechRate.toFixed(2)+'×';
+        storeSpeechPreference('phyto-booklet-speech-rate',String(speechRate));
+      });
+    }
+    if(arabicVoiceSelect)arabicVoiceSelect.addEventListener('change',function(){
+      speechVoicePreferences.ar=arabicVoiceSelect.value||'auto';
+      storeSpeechPreference('phyto-booklet-voice-ar',speechVoicePreferences.ar);
+    });
+    if(englishVoiceSelect)englishVoiceSelect.addEventListener('change',function(){
+      speechVoicePreferences.en=englishVoiceSelect.value||'auto';
+      storeSpeechPreference('phyto-booklet-voice-en',speechVoicePreferences.en);
+    });
+    refreshSpeechVoiceControls();
+    if(speechSynthesis&&typeof speechSynthesis.addEventListener==='function'){
+      speechSynthesis.addEventListener('voiceschanged',refreshSpeechVoiceControls);
+    }else if(speechSynthesis){
+      var previousVoicesChanged=speechSynthesis.onvoiceschanged;
+      speechSynthesis.onvoiceschanged=function(event){
+        if(typeof previousVoicesChanged==='function')previousVoicesChanged.call(speechSynthesis,event);
+        refreshSpeechVoiceControls();
+      };
+    }
+    window.setTimeout(refreshSpeechVoiceControls,250);
   }
 
   function updatePageReadButton(){
@@ -275,7 +437,9 @@
   }
 
   function stopSpeech(){
+    speechRequest++;
     speechSession++;
+    cancelWarningSound();
     if(speechSynthesis&&typeof speechSynthesis.cancel==='function'){
       try{speechSynthesis.cancel();}catch(error){}
     }
@@ -298,26 +462,20 @@
       var utterance;
       try{utterance=new SpeechUtterance(chunks.shift());}
       catch(error){speechActive=false;updatePageReadButton();return;}
-      var language=speechLanguage(utterance.text);
-      utterance.lang=language;
-      utterance.rate=.94;
+      var requestedLanguage=speechLanguage(utterance.text);
+      var voice=preferredSpeechVoice(requestedLanguage);
+      utterance.lang=voice&&voice.lang?voice.lang:requestedLanguage;
+      utterance.rate=speechRate;
       utterance.pitch=1;
       utterance.volume=1;
-      if(typeof speechSynthesis.getVoices==='function'){
-        var voices=speechSynthesis.getVoices()||[];
-        var locale=language.toLowerCase();
-        var prefix=language.slice(0,2).toLowerCase();
-        var voice=voices.filter(function(item){return item.lang&&item.lang.toLowerCase()===locale;})[0]
-          ||voices.filter(function(item){return item.lang&&item.lang.toLowerCase().indexOf(prefix)===0;})[0];
-        if(voice)utterance.voice=voice;
-      }
+      if(voice)utterance.voice=voice;
       utterance.onend=speakNext;
       utterance.onerror=function(event){
         if(session!==speechSession)return;
         speechActive=false;
         updatePageReadButton();
         if(event&&event.error&&event.error!=='canceled'&&event.error!=='interrupted'){
-          announceHighlight('تعذرت القراءة الصوتية. جرّب تشغيلها مرة أخرى.');
+          announceHighlight('تعذرت القراءة الصوتية. جرّب صوتًا آخر من إعدادات القراءة.');
         }
       };
       try{speechSynthesis.speak(utterance);}
@@ -328,10 +486,67 @@
     return true;
   }
 
+  function speakWarningBeforeText(value,request){
+    var locale=speechLanguage(value);
+    var warning;
+    try{
+      warning=new SpeechUtterance(locale==='ar-EG'
+        ?'تنبيه. النص التالي يحتوي على محاذير تتعلق بالسلامة.'
+        :'Warning. The next passage contains safety cautions.');
+    }catch(error){
+      if(request===speechRequest)speakText(value);
+      return Promise.resolve(false);
+    }
+    var voice=preferredSpeechVoice(locale);
+    warning.lang=voice&&voice.lang?voice.lang:locale;
+    warning.rate=Math.min(speechRate,.9);
+    warning.pitch=1;
+    warning.volume=1;
+    if(voice)warning.voice=voice;
+    return new Promise(function(resolve){
+      var finished=false;
+      var timer=window.setTimeout(finish,5000);
+      function finish(){
+        if(finished)return;
+        finished=true;
+        window.clearTimeout(timer);
+        if(request!==speechRequest){resolve(false);return;}
+        speakText(value);
+        resolve(true);
+      }
+      warning.onend=finish;
+      warning.onerror=finish;
+      try{speechSynthesis.speak(warning);}
+      catch(error){finish();}
+    });
+  }
+
+  function readText(value,safety){
+    if(!speechSynthesis||!SpeechUtterance||typeof speechSynthesis.speak!=='function'||!splitSpeechText(value).length)return false;
+    if(safety!=='caution')return speakText(value);
+    if(!soundEnabled&&PageAudio)return speakText(value);
+    stopSpeech();
+    speechActive=true;
+    updatePageReadButton();
+    var request=speechRequest;
+    if(!PageAudio){
+      speakWarningBeforeText(value,request);
+      return true;
+    }
+    playWarningSound(request).then(function(played){
+      if(request!==speechRequest)return;
+      if(!played&&soundEnabled){speakWarningBeforeText(value,request);return;}
+      speakText(value);
+    });
+    return true;
+  }
+
   function makeTableHotspot(visual,pageIndex,table,entry,isHeader){
     var top=isHeader?table.header.top:entry.top;
     var bottom=isHeader?table.header.bottom:entry.bottom;
     var label=isHeader?table.header.label:entry.label;
+    var speechText=isHeader?table.header.speech:entry.speech;
+    var safety=safetyForText(speechText);
     var button=document.createElement('button');
     button.type='button';
     button.className='table-row-hotspot';
@@ -339,15 +554,15 @@
     button.style.top=top+'%';
     button.style.width=table.width+'%';
     button.style.height=(bottom-top)+'%';
+    button.setAttribute('data-safety',safety);
     button.setAttribute('aria-pressed','false');
     button.setAttribute('aria-label','تظليل وقراءة '+(isHeader?'رؤوس الأعمدة':'صف '+label)+' من '+table.title+'، صفحة '+digits(pageIndex+1));
     button.title=isHeader?'تظليل عناوين الجدول وقراءتها':'تظليل وقراءة صف '+label;
     button.addEventListener('click',function(event){
       event.stopPropagation();
       showHighlight(visual,{left:table.left,top:top,width:table.width,height:bottom-top},
-        isHeader?'عناوين الجدول':label,pageIndex+1,button);
-      var speechText=isHeader?table.header.speech:entry.speech;
-      if(speechText)speakText(speechText);
+        isHeader?'عناوين الجدول':label,pageIndex+1,button,safety);
+      if(speechText)readText(speechText,safety);
     });
     visual.appendChild(button);
   }
@@ -432,8 +647,8 @@
   function updateSoundControl(){
     if(!soundButton)return;
     soundButton.setAttribute('aria-pressed',String(soundEnabled));
-    soundButton.setAttribute('aria-label',soundEnabled?'كتم صوت التقليب وتظليل المعلومات':'تشغيل صوت التقليب وتظليل المعلومات');
-    soundButton.title=soundEnabled?'كتم صوت التقليب وتظليل المعلومات':'تشغيل صوت التقليب وتظليل المعلومات';
+    soundButton.setAttribute('aria-label',soundEnabled?'كتم أصوات التقليب والتظليل والتنبيه':'تشغيل أصوات التقليب والتظليل والتنبيه');
+    soundButton.title=soundEnabled?'كتم أصوات التقليب والتظليل والتنبيه':'تشغيل أصوات التقليب والتظليل والتنبيه';
     if(soundLabel)soundLabel.textContent=soundEnabled?'الصوت: يعمل':'الصوت: مكتوم';
   }
 
@@ -631,6 +846,61 @@
     }).catch(function(){});
   }
 
+  function cancelWarningSound(){
+    warningSoundToken++;
+    if(warningSoundTimer){window.clearTimeout(warningSoundTimer);warningSoundTimer=null;}
+    warningOscillators.forEach(function(oscillator){
+      try{oscillator.stop();}catch(error){}
+    });
+    warningOscillators=[];
+    if(warningSoundResolve){
+      var resolve=warningSoundResolve;
+      warningSoundResolve=null;
+      resolve(false);
+    }
+  }
+
+  function playWarningSound(request){
+    if(!soundEnabled||!PageAudio)return Promise.resolve(false);
+    return audioReady().then(function(context){
+      if(!context||!soundEnabled||request!==speechRequest)return false;
+      cancelWarningSound();
+      var token=warningSoundToken;
+      var now=context.currentTime;
+      var notes=[{frequency:760,offset:0},{frequency:570,offset:.19},{frequency:760,offset:.4}];
+      try{
+        notes.forEach(function(note){
+          var start=now+note.offset;
+          var oscillator=context.createOscillator();
+          var envelope=context.createGain();
+          oscillator.type='triangle';
+          oscillator.frequency.setValueAtTime(note.frequency,start);
+          envelope.gain.setValueAtTime(.0001,start);
+          envelope.gain.exponentialRampToValueAtTime(.11,start+.012);
+          envelope.gain.exponentialRampToValueAtTime(.0001,start+.12);
+          oscillator.connect(envelope);
+          envelope.connect(context.destination);
+          oscillator.start(start);
+          oscillator.stop(start+.13);
+          warningOscillators.push(oscillator);
+        });
+      }catch(error){
+        cancelWarningSound();
+        return false;
+      }
+      return new Promise(function(resolve){
+        warningSoundResolve=resolve;
+        warningSoundTimer=window.setTimeout(function(){
+          if(token!==warningSoundToken)return;
+          warningSoundTimer=null;
+          warningOscillators=[];
+          warningSoundResolve=null;
+          resolve(true);
+        },650);
+      });
+    }).catch(function(){return false;});
+  }
+
   function turnTo(index){
     if(turning||index<0||index>=pages.length||index===current)return;
     stopSpeech();
@@ -695,23 +965,26 @@
     if(!PageAudio){
       soundEnabled=false;
       soundButton.disabled=true;
-      soundButton.title='الصوت غير مدعوم في هذا المتصفح';
-      soundButton.setAttribute('aria-label','الصوت غير مدعوم في هذا المتصفح');
+      soundButton.title='أصوات التظليل والتنبيه غير مدعومة في هذا المتصفح';
+      soundButton.setAttribute('aria-label','أصوات التظليل والتنبيه غير مدعومة في هذا المتصفح');
       if(soundLabel)soundLabel.textContent='الصوت غير متاح';
     }else{
       soundButton.addEventListener('click',function(){
         soundEnabled=!soundEnabled;
         updateSoundControl();
         if(soundEnabled)audioReady();
+        else cancelWarningSound();
       });
       updateSoundControl();
     }
   }
+  initializeSpeechSettings();
   if(pageReadButton){
     pageReadButton.addEventListener('click',function(){
       if(speechActive){stopSpeech();return;}
       var transcript=pages[current].querySelector('.page-transcript pre');
-      speakText(transcript?transcript.textContent:(pages[current].getAttribute('data-page-title')||''));
+      var text=transcript?transcript.textContent:(pages[current].getAttribute('data-page-title')||'');
+      readText(text,safetyForText(text));
     });
     updatePageReadButton();
   }
