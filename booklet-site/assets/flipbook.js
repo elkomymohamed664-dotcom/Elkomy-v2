@@ -724,9 +724,6 @@
       for(var b=0;b<secondForms.length;b++){
         var left=firstForms[a],right=secondForms[b];
         if(left===right)return true;
-        var shorter=left.length<=right.length?left:right;
-        var longer=left.length>right.length?left:right;
-        if(shorter.length>=4&&longer.indexOf(shorter)===0)return true;
       }
     }
     return false;
@@ -736,7 +733,7 @@
     return !!token&&token.length>=3&&!Object.prototype.hasOwnProperty.call(audioStopWords,token);
   }
 
-  // Word positions are included only when Whisper's audio timestamps were matched to the transcript.
+  // Keep only exact/normalized/split lexical matches; fuzzy and contextual candidates stay untimed.
   // Missing words stay untimed; section duration is never spread proportionally across text.
   function timedAudioTokens(segment){
     var text=String(segment&&segment.text||'');
@@ -750,11 +747,13 @@
       var start=Number(timing[0]);
       var end=Number(timing[1]);
       var sentenceIndex=Number(timing[2]);
+      var quality=Number(timing[3]);
       if(!isFinite(start)||!isFinite(end)||end<=start||!isFinite(sentenceIndex))return;
+      if(quality!==0&&quality!==1&&quality!==4)return;
       token.audioStart=start;
       token.audioEnd=end;
       token.sentenceIndex=sentenceIndex;
-      token.alignmentQuality=Number(timing[3]);
+      token.alignmentQuality=quality;
       token.sourceIndex=index;
       timed.push(token);
     });
@@ -829,16 +828,7 @@
     var tokens=patientAudioTokensForCue(entry,cue);
     var requested=normalizeAudioToken(requestedWord);
     if(!requested||!tokens.length)return null;
-    var queryTokens=tokenizeAudioText(contextText);
     var selectedStart=selectedWord&&typeof selectedWord.start==='number'?selectedWord.start:-1;
-    var targetQueryIndex=-1;
-    if(selectedStart>=0){
-      var queryDistance=Infinity;
-      queryTokens.forEach(function(token,index){
-        var distance=Math.abs(token.start-selectedStart);
-        if(distance<queryDistance){queryDistance=distance;targetQueryIndex=index;}
-      });
-    }
     var expectedIndex=null;
     if(phraseMatch&&phraseMatch.last>=phraseMatch.first){
       var fraction=selectedStart>=0?selectedStart/Math.max(1,String(contextText||'').length):.5;
@@ -862,17 +852,6 @@
         if(score>bestScore){bestScore=score;best=item;}
       });
       return {token:best.token,index:best.index,exact:normalizeAudioToken(best.token.raw)===requested,inferred:false};
-    }
-    if(phraseMatch&&phraseMatch.matches&&phraseMatch.matches.length){
-      var nearestRecord=phraseMatch.matches[0];
-      var nearestDistance=Infinity;
-      phraseMatch.matches.forEach(function(record){
-        var distance=targetQueryIndex>=0?Math.abs(record.queryIndex-targetQueryIndex):
-          Math.abs(record.audioIndex-expectedIndex);
-        if(distance<nearestDistance){nearestDistance=distance;nearestRecord=record;}
-      });
-      var inferredToken=tokens[nearestRecord.audioIndex];
-      if(inferredToken)return {token:inferredToken,index:nearestRecord.audioIndex,exact:false,inferred:true};
     }
     return null;
   }
@@ -977,6 +956,7 @@
     var completeSentence=!!(sentence&&sentence.playable===true&&
       sentence.startSeconds!==null&&sentence.endSeconds!==null&&
       isFinite(Number(sentence.startSeconds))&&isFinite(Number(sentence.endSeconds)));
+    if(!completeSentence&&sentenceTokens.length<2)return null;
     var start=completeSentence?Number(sentence.startSeconds):sentenceTokens[0].audioStart;
     var end=completeSentence?Number(sentence.endSeconds):sentenceTokens[sentenceTokens.length-1].audioEnd;
     start=Math.max(0,start-.08);
