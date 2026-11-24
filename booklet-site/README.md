@@ -27,7 +27,7 @@ python3 -m http.server 8000 --bind 0.0.0.0
 يلزم ضبط متغيرات بيئة الإنتاج في Vercel قبل تفعيل الإرسال:
 
 - `CONTACT_TO_EMAIL` — عنوان الاستلام.
-- `CONTACT_FROM_EMAIL` — عنوان إرسال موثّق في حساب Resend، مثل `PHYTO MOTION <contact@your-verified-domain>`.
+- `CONTACT_FROM_EMAIL` — عنوان إرسال موثّق في حساب Resend للإنتاج، مثل `PHYTO MOTION <contact@your-verified-domain>`. للاختبار فقط يمكن استخدام `onboarding@resend.dev` إذا كان بريد حساب Resend هو نفسه عنوان الاستلام؛ هذا المرسل محدود بحساب المالك وليس بديلًا دائمًا عن توثيق نطاق.
 - `RESEND_API_KEY` — مفتاح Resend، ويُحفظ كمتغير حساس في Vercel فقط؛ لا تضعه في Git أو المتصفح.
 
 إذا لم يكتمل إعداد المرسل والمفتاح، يعيد الـ API حالة `503` بدل الإيحاء بأن الرسالة أُرسلت. خادم `python3 -m http.server` يعرض الصفحات الثابتة فقط ولا يشغّل دوال `/api`.
