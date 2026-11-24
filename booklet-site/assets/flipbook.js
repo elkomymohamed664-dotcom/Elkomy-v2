@@ -23,6 +23,18 @@
   var pageReadButton=document.getElementById('page-read-toggle');
   var pageReadLabel=document.getElementById('page-read-label');
   var patientFullAudio=document.getElementById('patient-full-audio');
+  var patientPageAudio=document.getElementById('patient-page-audio');
+  var patientPageAudioPage=0;
+  var patientPageAudioFiles={
+    1:'assets/audio/pages/patient-page-01-ar-eg.mp3',
+    2:'assets/audio/pages/patient-page-02-ar-eg.mp3',
+    3:'assets/audio/pages/patient-page-03-ar-eg.mp3',
+    4:'assets/audio/pages/patient-page-04-ar-eg.mp3',
+    5:'assets/audio/pages/patient-page-05-ar-eg.mp3',
+    6:'assets/audio/pages/patient-page-06-ar-eg.mp3',
+    7:'assets/audio/pages/patient-page-07-ar-eg.mp3',
+    8:'assets/audio/pages/patient-page-08-ar-eg.mp3'
+  };
   var pageAudioButtons=[];
   var patientAudioButton=document.getElementById('patient-audio-play');
   var patientAudioButtonLabel=document.getElementById('patient-audio-play-label');
@@ -58,21 +70,11 @@
     {index:8,title:'قائمة فحص الأمان',start:716.84,end:793.68},
     {index:9,title:'الأسئلة الشائعة والقاعدة الذهبية',start:793.68,end:921.96}
   ];
+  // Per-page playback uses the dedicated clips; selected text uses device speech only.
+  // Do not download the legacy full-book timing transcript on page load.
   var patientAudioScriptSegments=[];
   var patientAudioTimedSegments=[];
   var patientAudioScriptReady=Promise.resolve(false);
-  if(patientFullAudio&&window.fetch){
-    patientAudioScriptReady=window.fetch('assets/audio/patient-guide-ar-eg.json',{cache:'force-cache'})
-      .then(function(response){if(!response.ok)throw new Error('Audio transcript unavailable');return response.json();})
-      .then(function(data){
-        patientAudioScriptSegments=data&&Array.isArray(data.segments)?data.segments:[];
-        patientAudioTimedSegments=patientAudioScriptSegments.map(function(segment,index){
-          return {index:index,segment:segment,tokens:timedAudioTokens(segment)};
-        }).filter(function(entry){return entry.tokens.length>0;});
-        return patientAudioTimedSegments.length>0;
-      })
-      .catch(function(){patientAudioScriptSegments=[];patientAudioTimedSegments=[];return false;});
-  }
   var arabicVoiceSelect=document.getElementById('speech-voice-ar');
   var englishVoiceSelect=document.getElementById('speech-voice-en');
   var speechRateInput=document.getElementById('speech-rate');
@@ -380,7 +382,7 @@
     var selectedWord=wordAtReadingPoint(hit,image,clientX,clientY);
     showHighlight(visual,readingHighlightGeometry(hit.data,hit.segment),
       selectedWord?'الكلمة المحددة: '+selectedWord.raw:'السطر المحدد',pageNumber,null,safety);
-    readText(text,safety,pageNumber,false,selectedWord);
+    readText(text,safety,pageNumber,false);
   }
 
   function speechLanguage(text){
@@ -443,17 +445,21 @@
     var prefix=locale.slice(0,2).toLowerCase();
     var name=(String(voice.name||'')+' '+String(voice.voiceURI||'')).toLowerCase();
     var score=lang===locale.toLowerCase()?1000:(lang.indexOf(prefix)===0?500:0);
-    if(/natural|neural|online|premium|enhanced|wavenet|studio|expressive|high[-\s]quality/.test(name))score+=30;
+    if(/natural|neural|premium|enhanced|wavenet|studio|expressive|high[-\s]quality/.test(name))score+=30;
     if(/compact|legacy|espeak|robotic/.test(name))score-=20;
-    if(voice.localService===false)score+=5;
+    if(voice.localService===true)score+=100;
+    else if(voice.localService===false)score-=100;
     if(voice.default)score+=1;
     return score;
   }
 
   function orderedVoicesFor(locale){
     var prefix=locale.slice(0,2).toLowerCase();
-    return readBrowserVoices().filter(function(voice){return normalizeVoiceLanguage(voice).indexOf(prefix)===0;})
-      .sort(function(a,b){return voiceQualityScore(b,locale)-voiceQualityScore(a,locale);});
+    // Prefer voices installed on the device; never explicitly select a network-only voice.
+    var systemVoices=readBrowserVoices().filter(function(voice){
+      return normalizeVoiceLanguage(voice).indexOf(prefix)===0&&voice.localService!==false;
+    });
+    return systemVoices.sort(function(a,b){return voiceQualityScore(b,locale)-voiceQualityScore(a,locale);});
   }
 
   function populateVoiceSelect(select,language,locale,autoLabel){
@@ -483,14 +489,14 @@
 
   function refreshSpeechVoiceControls(){
     availableSpeechVoices=readBrowserVoices();
-    populateVoiceSelect(arabicVoiceSelect,'ar','ar-EG','أفضل صوت عربي تلقائيًا');
+    populateVoiceSelect(arabicVoiceSelect,'ar','ar-EG','أفضل صوت مصري متاح تلقائيًا');
     populateVoiceSelect(englishVoiceSelect,'en','en-US','أفضل صوت إنجليزي تلقائيًا');
     if(speechSettingsNote){
       var note=availableSpeechVoices.length
-        ?'يختار الوضع التلقائي الصوت الأقرب للغة ويفضّل Natural أو Neural إن وُجد. جودة الصوت تعتمد على الجهاز والمتصفح.'
-        :'لا يوفّر المتصفح قائمة أصوات إضافية؛ ستُستخدم قراءته الافتراضية.';
-      if(availableSpeechVoices.length&&!orderedVoicesFor('ar-EG').length)note+=' لا يظهر صوت عربي في القائمة؛ سيحاول المتصفح استخدام صوته الافتراضي.';
-      if(availableSpeechVoices.length&&!orderedVoicesFor('en-US').length)note+=' لا يظهر صوت إنجليزي في القائمة؛ سيحاول المتصفح استخدام صوته الافتراضي.';
+        ?'يطلب الوضع التلقائي صوت ar-EG للعربية، ويُفضّل الصوت المثبّت على الجهاز. جودة النطق وتوافره يعتمدان على الهاتف والمتصفح.'
+        :'لا يوفّر المتصفح قائمة أصوات؛ سيُطلب ar-EG للنص العربي باستخدام صوت النظام الافتراضي.';
+      if(availableSpeechVoices.length&&!orderedVoicesFor('ar-EG').length)note+=' لا يظهر صوت عربي في القائمة؛ سيُطلب ar-EG من صوت النظام الافتراضي.';
+      if(availableSpeechVoices.length&&!orderedVoicesFor('en-US').length)note+=' لا يظهر صوت إنجليزي في القائمة؛ سيُطلب en-US من صوت النظام الافتراضي.';
       speechSettingsNote.textContent=note;
     }
   }
@@ -498,9 +504,13 @@
   function preferredSpeechVoice(locale){
     availableSpeechVoices=readBrowserVoices();
     var language=locale.slice(0,2).toLowerCase();
+    var prefix=locale.slice(0,2).toLowerCase();
+    var matchingVoices=availableSpeechVoices.filter(function(voice){
+      return normalizeVoiceLanguage(voice).indexOf(prefix)===0&&voice.localService!==false;
+    });
     var key=speechVoicePreferences[language]||'auto';
     if(key!=='auto'){
-      var selected=availableSpeechVoices.filter(function(voice){return speechVoiceKey(voice)===key;})[0];
+      var selected=matchingVoices.filter(function(voice){return speechVoiceKey(voice)===key;})[0];
       if(selected)return selected;
     }
     return orderedVoicesFor(locale)[0]||null;
@@ -547,37 +557,46 @@
     if(!pageReadButton)return;
     var patientAudioSupported=!!patientFullAudio;
     var speechSupported=!!(speechSynthesis&&SpeechUtterance&&typeof speechSynthesis.speak==='function');
+    var currentPage=Number(current)+1;
+    var pageRecording=!!(patientPageAudio&&patientPageAudioPage===currentPage&&
+      !patientPageAudio.paused&&!patientPageAudio.ended);
+    var excerptRecording=!!(patientAudioIsExcerpt&&patientAudioExcerptWholePage&&
+      patientAudioExcerptPage===currentPage&&patientFullAudio&&!patientFullAudio.paused);
+    var recordingActive=pageRecording||excerptRecording;
+    var active=recordingActive||speechActive;
     var supported=patientAudioSupported||speechSupported;
+    var activeLabel=recordingActive?'إيقاف تسجيل الصفحة الحالية':'إيقاف القراءة الصوتية';
+    var idleLabel=patientAudioSupported?'استمع إلى تسجيل الصفحة الحالية':'استمع إلى نص الصفحة الحالية';
     pageReadButton.disabled=!supported;
-    pageReadButton.setAttribute('aria-pressed',String(speechActive&&supported));
-    var idleLabel=patientAudioSupported?'استمع إلى التسجيل المرتبط بالصفحة الحالية':'استمع إلى نص الصفحة الحالية';
-    var activeLabel=patientAudioSupported?'إيقاف المقطع الصوتي':'إيقاف القراءة الصوتية';
+    pageReadButton.setAttribute('aria-pressed',String(active&&supported));
     pageReadButton.setAttribute('aria-label',supported
-      ?(speechActive?activeLabel:idleLabel)
+      ?(active?activeLabel:idleLabel)
       :'القراءة الصوتية غير متاحة في هذا المتصفح');
     pageReadButton.title=supported
-      ?(speechActive?activeLabel:idleLabel)
+      ?(active?activeLabel:idleLabel)
       :'القراءة الصوتية غير متاحة في هذا المتصفح';
     if(pageReadLabel)pageReadLabel.textContent=supported
-      ?(speechActive?(patientAudioSupported?'إيقاف الاستماع':'إيقاف القراءة'):(patientAudioSupported?'استمع إلى تسجيل الصفحة':'استمع إلى الصفحة'))
+      ?(active?(recordingActive?'إيقاف التسجيل':'إيقاف القراءة'):(patientAudioSupported?'استمع إلى تسجيل الصفحة':'استمع إلى الصفحة'))
       :'القراءة غير متاحة';
   }
 
   function updatePageAudioButtons(){
     var speechSupported=!!(speechSynthesis&&SpeechUtterance&&typeof speechSynthesis.speak==='function');
     pageAudioButtons.forEach(function(item){
-      var recording=!!(patientAudioIsExcerpt&&patientAudioExcerptWholePage&&
+      var pageRecording=!!(patientPageAudio&&patientPageAudioPage===item.pageNumber&&
+        !patientPageAudio.paused&&!patientPageAudio.ended);
+      var excerptRecording=!!(patientAudioIsExcerpt&&patientAudioExcerptWholePage&&
         patientAudioExcerptPage===item.pageNumber&&patientFullAudio&&!patientFullAudio.paused);
       var phoneVoice=!!(patientAudioFallbackWholePage&&patientAudioFallbackPage===item.pageNumber&&speechActive);
-      var active=recording||phoneVoice;
-      item.button.disabled=!speechSupported&&!recording;
+      var active=pageRecording||excerptRecording||phoneVoice;
+      item.button.disabled=!patientPageAudioFiles[item.pageNumber]||(!patientPageAudio&&!speechSupported);
       item.button.setAttribute('aria-pressed',String(active));
       item.button.setAttribute('aria-label',active
         ?(phoneVoice?'إيقاف قراءة الصفحة بصوت الهاتف':'إيقاف تسجيل الصفحة '+digits(item.pageNumber))
-        :'اقرأ الصفحة كاملة بصوت الهاتف، صفحة '+digits(item.pageNumber));
+        :'استمع إلى التسجيل المصري للصفحة كاملة، صفحة '+digits(item.pageNumber));
       item.label.textContent=active
-        ?(phoneVoice?'إيقاف قراءة الصفحة':'إيقاف تسجيل الصفحة')
-        :'اقرأ الصفحة كاملة';
+        ?(phoneVoice?'إيقاف قراءة الصفحة':'إيقاف التسجيل')
+        :'استمع إلى التسجيل المصري للصفحة كاملة';
     });
   }
 
@@ -617,6 +636,8 @@
 
   function stopSpeech(){
     var wasPatientAudioExcerpt=patientAudioIsExcerpt;
+    var wasPageClipPlaying=!!(patientPageAudio&&patientPageAudioPage&&!patientPageAudio.paused&&!patientPageAudio.ended);
+    var stoppedPageClip=patientPageAudioPage;
     var wasDevicePageRead=patientAudioFallbackWholePage&&speechActive;
     var stoppedDevicePage=patientAudioFallbackPage;
     speechRequest++;
@@ -645,6 +666,11 @@
       try{patientFullAudio.pause();}catch(error){}
       restorePatientAudioGestureMute();
     }
+    if(patientPageAudio&&patientPageAudioPage){
+      try{if(!patientPageAudio.paused)patientPageAudio.pause();}catch(error){}
+      try{patientPageAudio.currentTime=0;}catch(error){}
+      patientPageAudioPage=0;
+    }
     if(speechSynthesis&&typeof speechSynthesis.cancel==='function'){
       try{speechSynthesis.cancel();}catch(error){}
     }
@@ -656,23 +682,71 @@
     updatePageAudioButtons();
     if(wasPatientAudioExcerpt&&patientAudioStatus){
       patientAudioStatus.textContent='توقف الاستماع إلى المقطع المحدد. يمكنك اختيار سطر أو صفحة لبدء الاستماع مجددًا.';
+    }else if(wasPageClipPlaying&&patientAudioStatus){
+      patientAudioStatus.textContent='توقف التسجيل المصري للصفحة '+digits(stoppedPageClip)+'.';
     }else if(wasDevicePageRead&&patientAudioStatus){
       patientAudioStatus.textContent='توقفت قراءة الصفحة '+digits(stoppedDevicePage)+'.';
     }
   }
 
   function pausePatientAudioForSpeech(){
+    if(patientPageAudio&&!patientPageAudio.paused){
+      try{patientPageAudio.pause();}catch(error){}
+      try{patientPageAudio.currentTime=0;}catch(error){}
+      patientPageAudioPage=0;
+      updatePageAudioButtons();
+    }
     if(!patientFullAudio||patientFullAudio.paused)return;
     patientFullAudio.pause();
     if(patientAudioStatus)patientAudioStatus.textContent='توقف التسجيل الكامل مؤقتًا لقراءة النص بصوت الهاتف.';
+  }
+
+  function fallbackPatientPageAudioToDevice(pageNumber,text,safety){
+    var page=Number(pageNumber)||0;
+    if(!patientPageAudio||page!==patientPageAudioPage)return false;
+    try{if(!patientPageAudio.paused)patientPageAudio.pause();}catch(error){}
+    try{patientPageAudio.currentTime=0;}catch(error){}
+    patientPageAudioPage=0;
+    updatePageAudioButtons();
+    if(patientAudioStatus)patientAudioStatus.textContent='تعذّر تشغيل التسجيل المصري للصفحة؛ سيُستخدم صوت الهاتف.';
+    return readWithDeviceVoice(text,safety,page,true,speechRequest);
+  }
+
+  function playPatientPageAudio(value,safety,pageNumber){
+    var page=Number(pageNumber)||0;
+    var source=patientPageAudioFiles[page];
+    if(!patientPageAudio||!source)return false;
+    if(patientPageAudioPage===page&&!patientPageAudio.paused&&!patientPageAudio.ended){
+      stopSpeech();
+      return true;
+    }
+    stopSpeech();
+    pausePatientAudioForSpeech();
+    patientPageAudioPage=page;
+    try{
+      if(patientPageAudio.getAttribute('src')!==source){
+        patientPageAudio.src=source;
+        patientPageAudio.load();
+      }
+      try{patientPageAudio.currentTime=0;}catch(error){}
+      updatePageAudioButtons();
+      if(patientAudioStatus)patientAudioStatus.textContent='جارٍ تشغيل التسجيل المصري للصفحة '+digits(page)+'.';
+      var playback=patientPageAudio.play();
+      if(playback&&typeof playback.catch==='function')playback.catch(function(){
+        fallbackPatientPageAudioToDevice(page,value,safety);
+      });
+      return true;
+    }catch(error){
+      fallbackPatientPageAudioToDevice(page,value,safety);
+      return true;
+    }
   }
 
   function patientAudioCueForPage(pageNumber,safety,text,wholePage){
     var page=Number(pageNumber)||1;
     var section=patientAudioSections;
     var cue;
-    // The existing section timestamps do not prove a complete page-to-recording match.
-    // Never use them as a whole-page recording; the page reader falls back to device speech.
+    // Whole-page playback uses the dedicated per-page clips; this helper is only for excerpts.
     if(wholePage)return null;
     var value=String(text||'');
     var practical=/(?:دليل الاستخدام|خطوة|توقيت|نصف ساعة|نص ساعة|الرحلة|مستنشق|إرشاد|طريقة الاستخدام|مقعد|تهوية|هاتف)/i.test(value);
@@ -1079,7 +1153,9 @@
   function readWithDeviceVoice(value,safety,pageNumber,wholePage,request){
     var text=String(value||'');
     if(!speechSynthesis||!SpeechUtterance||typeof speechSynthesis.speak!=='function'||!splitSpeechText(text).length){
-      if(patientAudioStatus)patientAudioStatus.textContent='لا يتوفر مقطع تسجيل مطابق أو صوت هاتف مدعوم لهذا النص.';
+      if(patientAudioStatus)patientAudioStatus.textContent=wholePage
+        ?'لا يتوفر صوت هاتف مدعوم لقراءة الصفحة كاملة.'
+        :'لا يتوفر صوت هاتف مدعوم لقراءة هذا النص.';
       return false;
     }
     if(typeof request==='number'&&request!==speechRequest)return false;
@@ -1090,17 +1166,17 @@
     patientAudioFallbackWholePage=!!wholePage;
     speechActive=true;
     if(patientAudioStatus)patientAudioStatus.textContent=wholePage
-      ?'لا يوجد تسجيل موثوق للصفحة كاملة؛ سيقرأ صوت الهاتف نص الصفحة بالتتابع.'
-      :'لا يوجد مقطع مطابق؛ سيقرأ صوت الهاتف النص المحدد.';
+      ?'سيقرأ صوت الهاتف نص الصفحة كاملة مع طلب ar-EG من النظام؛ وقد تختلف اللهجة حسب الأصوات المثبّتة.'
+      :'سيقرأ صوت الهاتف النص المحدد.';
     updatePageReadButton();
     updatePatientAudioButton();
 
     function startReading(){
       if(activeRequest!==speechRequest)return;
       if(patientAudioStatus)patientAudioStatus.textContent=wholePage
-        ?'يقرأ صوت الهاتف نص الصفحة كاملة بالتتابع.'
+        ?'يقرأ صوت الهاتف نص الصفحة كاملة مع طلب ar-EG من النظام.'
         :'يقرأ صوت الهاتف النص المحدد.';
-      var started=speakText(text,true);
+      var started=speakText(text,true,wholePage?'ar-EG':null);
       if(!started){
         speechActive=false;
         patientAudioFallbackPage=0;
@@ -1254,7 +1330,7 @@
     updatePageAudioButtons();
   }
 
-  function speakText(value,alreadyStopped){
+  function speakText(value,alreadyStopped,languageHint){
     if(!speechSynthesis||!SpeechUtterance||typeof speechSynthesis.speak!=='function')return false;
     var chunks=splitSpeechText(value);
     if(!chunks.length)return false;
@@ -1281,9 +1357,9 @@
       var utterance;
       try{utterance=new SpeechUtterance(chunks.shift());}
       catch(error){finishSpeechSession(false);return false;}
-      var requestedLanguage=speechLanguage(utterance.text);
+      var requestedLanguage=languageHint||speechLanguage(utterance.text);
       var voice=preferredSpeechVoice(requestedLanguage);
-      utterance.lang=voice&&voice.lang?voice.lang:requestedLanguage;
+      utterance.lang=requestedLanguage;
       utterance.rate=speechRate;
       utterance.pitch=1;
       utterance.volume=1;
@@ -1316,7 +1392,7 @@
       return Promise.resolve(false);
     }
     var voice=preferredSpeechVoice(locale);
-    warning.lang=voice&&voice.lang?voice.lang:locale;
+    warning.lang=locale;
     warning.rate=Math.min(speechRate,.9);
     warning.pitch=1;
     warning.volume=1;
@@ -1339,10 +1415,11 @@
     });
   }
 
-  function readText(value,safety,pageNumber,wholePage,selectedWord){
+  function readText(value,safety,pageNumber,wholePage){
     if(patientFullAudio){
-      if(wholePage)return readWithDeviceVoice(value,safety,pageNumber,true,speechRequest);
-      return readPatientAudio(value,safety,pageNumber,false,selectedWord);
+      if(wholePage&&playPatientPageAudio(value,safety,pageNumber))return true;
+      // Selecting a line, word, or table row uses the phone voice only.
+      return readWithDeviceVoice(value,safety,pageNumber,wholePage,speechRequest);
     }
     pausePatientAudioForSpeech();
     if(!speechSynthesis||!SpeechUtterance||typeof speechSynthesis.speak!=='function'||!splitSpeechText(value).length)return false;
@@ -1379,9 +1456,9 @@
     button.style.height=(bottom-top)+'%';
     button.setAttribute('data-safety',safety);
     button.setAttribute('aria-pressed','false');
-    button.setAttribute('aria-label',(patientFullAudio?'تظليل وتشغيل المقطع المرتبط بـ':'تظليل وقراءة ')+(isHeader?'رؤوس الأعمدة':'صف '+label)+' من '+table.title+'، صفحة '+digits(pageIndex+1));
+    button.setAttribute('aria-label',(patientFullAudio?'تظليل وقراءة بصوت الجهاز فقط: ':'تظليل وقراءة ')+(isHeader?'رؤوس الأعمدة':'صف '+label)+' من '+table.title+'، صفحة '+digits(pageIndex+1));
     button.title=patientFullAudio
-      ?(isHeader?'تظليل وتشغيل التسجيل المرتبط بعناوين الجدول':'تظليل وتشغيل التسجيل المرتبط بصف '+label)
+      ?(isHeader?'تظليل وقراءة عناوين الجدول بصوت الجهاز فقط':'تظليل وقراءة صف '+label+' بصوت الجهاز فقط')
       :(isHeader?'تظليل عناوين الجدول وقراءتها':'تظليل وقراءة صف '+label);
     button.addEventListener('click',function(event){
       event.stopPropagation();
@@ -1405,26 +1482,29 @@
         pageAudioToggle.className='page-audio-toggle';
         pageAudioToggle.setAttribute('data-page-audio',String(index+1));
         pageAudioToggle.setAttribute('aria-pressed','false');
-        pageAudioToggle.setAttribute('aria-label','اقرأ الصفحة كاملة بصوت الهاتف، صفحة '+digits(index+1));
-        pageAudioToggle.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4h4l5 4V6l-5 4H4Z"/><path d="M16 9a5 5 0 0 1 0 6m2-9a9 9 0 0 1 0 12"/></svg><span>اقرأ الصفحة كاملة</span>';
+        pageAudioToggle.setAttribute('aria-label','استمع إلى التسجيل المصري الخاص بالصفحة '+digits(index+1));
+        pageAudioToggle.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4h4l5 4V6l-5 4H4Z"/><path d="M16 9a5 5 0 0 1 0 6m2-9a9 9 0 0 1 0 12"/></svg><span>استمع إلى التسجيل المصري</span>';
         page.insertBefore(pageAudioToggle,figure);
         pageAudioButtons.push({button:pageAudioToggle,label:pageAudioToggle.querySelector('span'),pageNumber:index+1});
         pageAudioToggle.addEventListener('click',function(event){
           event.stopPropagation();
-          var deviceVoiceActive=patientAudioFallbackWholePage&&patientAudioFallbackPage===index+1&&speechActive;
+          var pageNumber=index+1;
+          var pageClipActive=patientPageAudio&&patientPageAudioPage===pageNumber&&
+            !patientPageAudio.paused&&!patientPageAudio.ended;
+          var deviceVoiceActive=patientAudioFallbackWholePage&&patientAudioFallbackPage===pageNumber&&speechActive;
           var recordingActive=patientAudioIsExcerpt&&patientAudioExcerptWholePage&&
-            patientAudioExcerptPage===index+1&&patientFullAudio&&!patientFullAudio.paused;
-          if(deviceVoiceActive||recordingActive){stopSpeech();return;}
+            patientAudioExcerptPage===pageNumber&&patientFullAudio&&!patientFullAudio.paused;
+          if(pageClipActive||deviceVoiceActive||recordingActive){stopSpeech();return;}
           var transcript=page.querySelector('.page-transcript pre');
           var text=transcript?transcript.textContent:(page.getAttribute('data-page-title')||'');
-          readText(text,safetyForText(text),index+1,true);
+          readText(text,safetyForText(text),pageNumber,true);
         });
       }
       visual.className='page-visual';
       visual.tabIndex=0;
       visual.setAttribute('role','group');
       visual.setAttribute('aria-label',patientFullAudio
-        ?'محتوى '+title+'؛ اضغط على كلمة أو سطر لتظليله وتشغيل المقطع المطابق، ويقرأ صوت الهاتف النص إذا لم يوجد تطابق موثوق؛ أو اختر صفًا من الجدول للاستماع إلى محتواه.'
+        ?'محتوى '+title+'؛ اضغط على كلمة أو سطر لتظليله وقراءة النص المحيط به بصوت الجهاز فقط. اختر صفًا من الجدول لقراءته بصوت الجهاز فقط. زر أعلى الصفحة يشغّل تسجيلها المصري الخاص بها.'
         :'محتوى '+title+'؛ اضغط على سطر لقراءته وتظليله، أو اختر صفًا من الجدول لقراءته كاملًا.');
       figure.insertBefore(visual,image);
       visual.appendChild(image);
@@ -1849,6 +1929,36 @@
         playPatientAudio();
       }else patientFullAudio.pause();
     });
+    if(patientPageAudio){
+      patientPageAudio.addEventListener('play',function(){
+        updatePageReadButton();
+        updatePageAudioButtons();
+      });
+      patientPageAudio.addEventListener('pause',function(){
+        updatePageReadButton();
+        updatePageAudioButtons();
+      });
+      patientPageAudio.addEventListener('ended',function(){
+        var finishedPage=patientPageAudioPage;
+        patientPageAudioPage=0;
+        updatePageReadButton();
+        updatePageAudioButtons();
+        if(patientAudioStatus)patientAudioStatus.textContent='انتهى التسجيل المصري للصفحة '+digits(finishedPage)+'.';
+      });
+      patientPageAudio.addEventListener('error',function(){
+        if(patientPageAudioPage){
+          var failedPage=patientPageAudioPage;
+          var failedText='';
+          pages.some(function(page,index){
+            if(index+1!==failedPage)return false;
+            var transcript=page.querySelector('.page-transcript pre');
+            failedText=transcript?transcript.textContent:(page.getAttribute('data-page-title')||'');
+            return true;
+          });
+          fallbackPatientPageAudioToDevice(failedPage,failedText,safetyForText(failedText));
+        }
+      });
+    }
     patientFullAudio.addEventListener('play',function(){
       var isGesturePrimingPlay=patientAudioPrimingPlayPending;
       if(isGesturePrimingPlay)clearPatientAudioPrimingPlayPending();
@@ -1930,7 +2040,7 @@
       if(!keepDeviceSpeech)speechActive=false;
       updatePageReadButton();
       updatePatientAudioButton();
-      if(!keepDeviceSpeech&&patientAudioStatus)patientAudioStatus.textContent='تعذّر تحميل التسجيل الصوتي. استخدم صوت الهاتف لقراءة الصفحة كاملة.';
+      if(!keepDeviceSpeech&&patientAudioStatus)patientAudioStatus.textContent='تعذّر تحميل التسجيل الكامل. يمكنك تجربة تسجيل الصفحة من زرها أعلى الصفحة.';
     });
     updatePatientAudioButton();
   }

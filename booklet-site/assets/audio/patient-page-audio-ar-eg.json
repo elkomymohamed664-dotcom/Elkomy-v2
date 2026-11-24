@@ -1,0 +1,17 @@
+{
+  "language": "ar-EG",
+  "voice": "صوت رجالي تعليمي باللهجة المصرية",
+  "generationMethod": "AI-synthesized, page-specific Egyptian Arabic narration using the selected masculine educational voice.",
+  "scriptSource": "patient-page-narration-ar-eg.json",
+  "originalFullRecording": "patient-guide-ar-eg.mp3",
+  "segments": [
+    {"page": 1, "title": "غلاف الكتيّب", "file": "pages/patient-page-01-ar-eg.mp3", "durationSeconds": 31.00},
+    {"page": 2, "title": "البداية وفهم دوار السفر", "file": "pages/patient-page-02-ar-eg.mp3", "durationSeconds": 49.96},
+    {"page": 3, "title": "الزنجبيل", "file": "pages/patient-page-03-ar-eg.mp3", "durationSeconds": 69.84},
+    {"page": 4, "title": "النعناع الفلفلي", "file": "pages/patient-page-04-ar-eg.mp3", "durationSeconds": 84.36},
+    {"page": 5, "title": "السيكران الأسود", "file": "pages/patient-page-05-ar-eg.mp3", "durationSeconds": 85.24},
+    {"page": 6, "title": "المقارنة ودليل الاستخدام العملي", "file": "pages/patient-page-06-ar-eg.mp3", "durationSeconds": 71.80},
+    {"page": 7, "title": "فحص الأمان والأسئلة الشائعة", "file": "pages/patient-page-07-ar-eg.mp3", "durationSeconds": 69.40},
+    {"page": 8, "title": "القاعدة الذهبية والمراجع", "file": "pages/patient-page-08-ar-eg.mp3", "durationSeconds": 52.60}
+  ]
+}
