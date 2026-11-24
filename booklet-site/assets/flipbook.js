@@ -469,12 +469,12 @@
   function updatePageReadButton(){
     if(!pageReadButton)return;
     if(patientFullAudio){
-      var pendingLabel='مزامنة النص مع التسجيل قيد المراجعة اليدوية';
+      var pendingLabel='قراءة الجملة من التسجيل غير متاحة لعدم توفر توقيتات موثقة';
       pageReadButton.disabled=true;
       pageReadButton.setAttribute('aria-pressed','false');
       pageReadButton.setAttribute('aria-label',pendingLabel);
       pageReadButton.title=pendingLabel;
-      if(pageReadLabel)pageReadLabel.textContent='المزامنة قيد المراجعة';
+      if(pageReadLabel)pageReadLabel.textContent='قراءة الجملة غير متاحة';
       return;
     }
     var supported=!!(speechSynthesis&&SpeechUtterance&&typeof speechSynthesis.speak==='function');
@@ -833,7 +833,7 @@
 
   function readText(value,safety,pageNumber,wholePage){
     if(patientFullAudio){
-      if(patientAudioStatus)patientAudioStatus.textContent='لم تُعتمد مزامنة هذا السطر مع التسجيل بعد. لن أستخدم صوت الجهاز أو موضعًا تقديريًا؛ شغّل التسجيل المصري الكامل من المشغّل حتى تُراجع العلامات اليدوية.';
+      if(patientAudioStatus)patientAudioStatus.textContent='لا يوجد توقيت موثّق لهذا السطر داخل التسجيل. لن أستخدم صوت الجهاز أو موضعًا تقديريًا؛ شغّل التسجيل المصري الكامل من المشغّل.';
       return false;
     }
     pausePatientAudioForSpeech();
