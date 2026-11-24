@@ -40,8 +40,8 @@
   var patientAudioSuppressPauseStatus=false;
   var patientAudioPendingCueHandler=null;
   var patientAudioPendingSeekHandler=null;
+  var patientAudioPrepareTimer=null;
   var patientAudioSeekTimer=null;
-  // These historic page offsets are intentionally dormant; only reviewed manual markers may drive patient-line playback.
   var patientAudioSections=[
     {index:0,title:'البداية والزنجبيل',start:0,end:116.88},
     {index:1,title:'تحذيرات الزنجبيل',start:116.88,end:208.56},
@@ -54,6 +54,21 @@
     {index:8,title:'قائمة فحص الأمان',start:716.84,end:793.68},
     {index:9,title:'الأسئلة الشائعة والقاعدة الذهبية',start:793.68,end:921.96}
   ];
+  var patientAudioScriptSegments=[];
+  var patientAudioTimedSegments=[];
+  var patientAudioScriptReady=Promise.resolve(false);
+  if(patientFullAudio&&window.fetch){
+    patientAudioScriptReady=window.fetch('assets/audio/patient-guide-ar-eg.json',{cache:'force-cache'})
+      .then(function(response){if(!response.ok)throw new Error('Audio transcript unavailable');return response.json();})
+      .then(function(data){
+        patientAudioScriptSegments=data&&Array.isArray(data.segments)?data.segments:[];
+        patientAudioTimedSegments=patientAudioScriptSegments.map(function(segment,index){
+          return {index:index,segment:segment,tokens:timedAudioTokens(segment)};
+        }).filter(function(entry){return entry.tokens.length>0;});
+        return patientAudioTimedSegments.length>0;
+      })
+      .catch(function(){patientAudioScriptSegments=[];patientAudioTimedSegments=[];return false;});
+  }
   var arabicVoiceSelect=document.getElementById('speech-voice-ar');
   var englishVoiceSelect=document.getElementById('speech-voice-en');
   var speechRateInput=document.getElementById('speech-rate');
@@ -283,14 +298,85 @@
     return {left:left,top:top,width:Math.min(100-left,width+.5),height:height};
   }
 
+  function wordAtReadingPoint(hit,image,clientX,clientY){
+    if(!patientFullAudio||!hit||!hit.segment)return null;
+    var segment=hit.segment;
+    var text=String(segment[4]||'');
+    var lines=text.split(/\r?\n/);
+    var lineOffsets=[];
+    var runningOffset=0;
+    lines.forEach(function(line){lineOffsets.push(runningOffset);runningOffset+=line.length+1;});
+    var rect=image.getBoundingClientRect();
+    if(!rect.width||!rect.height)return null;
+    var naturalX=(clientX-rect.left)*(hit.data.width/rect.width);
+    var naturalY=(clientY-rect.top)*(hit.data.height/rect.height);
+    var left=Number(segment[0])||0;
+    var top=Number(segment[1])||0;
+    var width=Math.max(1,Number(segment[2])||1);
+    var height=Math.max(1,Number(segment[3])||1);
+    var yFraction=Math.max(0,Math.min(.999,(naturalY-top)/height));
+    var lineIndex=lines.length>1?Math.min(lines.length-1,Math.floor(yFraction*lines.length)):0;
+    var line=lines[lineIndex]||text;
+    var words=tokenizeAudioText(line);
+    if(!words.length)return null;
+    var arabic=(line.match(/[\u0600-\u06ff]/g)||[]).length;
+    var latin=(line.match(/[A-Za-z]/g)||[]).length;
+    var rtl=arabic>=latin*.55;
+    var context=null;
+    try{context=document.createElement('canvas').getContext('2d');}catch(error){}
+    var measured=[];
+    var totalWidth=0;
+    var gapWidth=0;
+    if(context){
+      var fontSize=Math.max(10,Math.min(72,height/Math.max(1,lines.length)*.74));
+      context.font=fontSize+'px Arial, sans-serif';
+      context.direction=rtl?'rtl':'ltr';
+      context.textAlign=rtl?'right':'left';
+      gapWidth=context.measureText(' ').width;
+      words.forEach(function(word,index){
+        var wordWidth=Math.max(1,context.measureText(word.raw).width);
+        measured.push({word:word,width:wordWidth});
+        totalWidth+=wordWidth+(index?gapWidth:0);
+      });
+    }
+    var xFraction=Math.max(0,Math.min(1,(naturalX-left)/width));
+    var progress=rtl?1-xFraction:xFraction;
+    var target;
+    if(totalWidth>0){
+      target=progress*totalWidth;
+      var cursor=0;
+      var closest=measured[0].word;
+      var closestDistance=Infinity;
+      measured.forEach(function(item,index){
+        var center=cursor+item.width/2;
+        var distance=Math.abs(center-target);
+        if(distance<closestDistance){closestDistance=distance;closest=item.word;}
+        cursor+=item.width+gapWidth;
+      });
+      return {raw:closest.raw,start:(lineOffsets[lineIndex]||0)+closest.start,
+        end:(lineOffsets[lineIndex]||0)+closest.end,lineIndex:lineIndex};
+    }
+    target=progress*line.length;
+    var best=words[0];
+    var bestDistance=Infinity;
+    words.forEach(function(word){
+      var center=(word.start+word.end)/2;
+      var distance=Math.abs(center-target);
+      if(distance<bestDistance){bestDistance=distance;best=word;}
+    });
+    return {raw:best.raw,start:(lineOffsets[lineIndex]||0)+best.start,
+      end:(lineOffsets[lineIndex]||0)+best.end,lineIndex:lineIndex};
+  }
+
   function selectReadingAtPoint(visual,image,clientX,clientY,pageNumber){
     var hit=nearestReadingSegment(image,clientX,clientY);
     if(!hit){selectAtPoint(visual,image,clientX,clientY,pageNumber);return;}
     var text=hit.segment[4];
     var safety=safetyForText(text);
+    var selectedWord=wordAtReadingPoint(hit,image,clientX,clientY);
     showHighlight(visual,readingHighlightGeometry(hit.data,hit.segment),
-      'السطر المحدد',pageNumber,null,safety);
-    readText(text,safety,pageNumber,false);
+      selectedWord?'الكلمة المحددة: '+selectedWord.raw:'السطر المحدد',pageNumber,null,safety);
+    readText(text,safety,pageNumber,false,selectedWord);
   }
 
   function speechLanguage(text){
@@ -399,13 +485,10 @@
       var note=availableSpeechVoices.length
         ?'يختار الوضع التلقائي الصوت الأقرب للغة ويفضّل Natural أو Neural إن وُجد. جودة الصوت تعتمد على الجهاز والمتصفح.'
         :'لا يوفّر المتصفح قائمة أصوات إضافية؛ ستُستخدم قراءته الافتراضية.';
-      if(availableSpeechVoices.length&&!orderedVoicesFor('ar-EG').length)note+=patientFullAudio
-        ?' لا يظهر صوت عربي في القائمة؛ ستُستخدم بداية القسم المسجل عند طلب قراءة الصفحة.'
-        :' لا يظهر صوت عربي في القائمة؛ سيحاول المتصفح استخدام صوته الافتراضي.';
+      if(availableSpeechVoices.length&&!orderedVoicesFor('ar-EG').length)note+=' لا يظهر صوت عربي في القائمة؛ سيحاول المتصفح استخدام صوته الافتراضي.';
       if(availableSpeechVoices.length&&!orderedVoicesFor('en-US').length)note+=' لا يظهر صوت إنجليزي في القائمة؛ سيحاول المتصفح استخدام صوته الافتراضي.';
       speechSettingsNote.textContent=note;
     }
-    updatePageReadButton();
   }
 
   function preferredSpeechVoice(locale){
@@ -417,16 +500,6 @@
       if(selected)return selected;
     }
     return orderedVoicesFor(locale)[0]||null;
-  }
-
-  function speechLanguageAvailable(locale){
-    if(!speechSynthesis||!SpeechUtterance||typeof speechSynthesis.speak!=='function')return false;
-    if(typeof speechSynthesis.getVoices!=='function')return true;
-    var voices=[];
-    try{voices=speechSynthesis.getVoices()||[];}catch(error){return false;}
-    if(!voices.length)return true;
-    var prefix=String(locale||'').slice(0,2).toLowerCase();
-    return voices.some(function(voice){return normalizeVoiceLanguage(voice).indexOf(prefix)===0;});
   }
 
   function storeSpeechPreference(key,value){
@@ -468,23 +541,21 @@
 
   function updatePageReadButton(){
     if(!pageReadButton)return;
-    if(patientFullAudio){
-      var pendingLabel='قراءة الجملة من التسجيل غير متاحة لعدم توفر توقيتات موثقة';
-      pageReadButton.disabled=true;
-      pageReadButton.setAttribute('aria-pressed','false');
-      pageReadButton.setAttribute('aria-label',pendingLabel);
-      pageReadButton.title=pendingLabel;
-      if(pageReadLabel)pageReadLabel.textContent='قراءة الجملة غير متاحة';
-      return;
-    }
-    var supported=!!(speechSynthesis&&SpeechUtterance&&typeof speechSynthesis.speak==='function');
+    var patientAudioSupported=!!patientFullAudio;
+    var speechSupported=!!(speechSynthesis&&SpeechUtterance&&typeof speechSynthesis.speak==='function');
+    var supported=patientAudioSupported||speechSupported;
     pageReadButton.disabled=!supported;
     pageReadButton.setAttribute('aria-pressed',String(speechActive&&supported));
-    var label=speechActive?'إيقاف القراءة الصوتية':'استمع إلى نص الصفحة الحالية';
-    pageReadButton.setAttribute('aria-label',supported?label:'القراءة الصوتية غير متاحة في هذا المتصفح');
-    pageReadButton.title=supported?label:'القراءة الصوتية غير متاحة في هذا المتصفح';
+    var idleLabel=patientAudioSupported?'استمع إلى التسجيل المرتبط بالصفحة الحالية':'استمع إلى نص الصفحة الحالية';
+    var activeLabel=patientAudioSupported?'إيقاف المقطع الصوتي':'إيقاف القراءة الصوتية';
+    pageReadButton.setAttribute('aria-label',supported
+      ?(speechActive?activeLabel:idleLabel)
+      :'القراءة الصوتية غير متاحة في هذا المتصفح');
+    pageReadButton.title=supported
+      ?(speechActive?activeLabel:idleLabel)
+      :'القراءة الصوتية غير متاحة في هذا المتصفح';
     if(pageReadLabel)pageReadLabel.textContent=supported
-      ?(speechActive?'إيقاف القراءة':'استمع إلى الصفحة')
+      ?(speechActive?(patientAudioSupported?'إيقاف الاستماع':'إيقاف القراءة'):(patientAudioSupported?'استمع إلى تسجيل الصفحة':'استمع إلى الصفحة'))
       :'القراءة غير متاحة';
   }
 
@@ -535,6 +606,7 @@
       patientFullAudio.removeEventListener('seeked',patientAudioPendingSeekHandler);
       patientAudioPendingSeekHandler=null;
     }
+    if(patientAudioPrepareTimer){window.clearTimeout(patientAudioPrepareTimer);patientAudioPrepareTimer=null;}
     if(patientAudioSeekTimer){window.clearTimeout(patientAudioSeekTimer);patientAudioSeekTimer=null;}
     if(patientAudioIsExcerpt&&patientFullAudio){
       if(!patientFullAudio.paused)patientAudioSuppressPauseStatus=true;
@@ -564,25 +636,333 @@
     if(patientAudioStatus)patientAudioStatus.textContent='توقف التسجيل الكامل مؤقتًا لقراءة المقطع المحدد.';
   }
 
-  function patientAudioCueForPage(pageNumber){
+  function patientAudioCueForPage(pageNumber,safety,text,wholePage){
     var page=Number(pageNumber)||1;
     var section=patientAudioSections;
-    var ranges={
-      1:{start:section[0].start,end:section[0].end,title:'البداية والزنجبيل'},
-      2:{start:section[0].start,end:section[0].end,title:'مقدمة الكتيّب وفهم دوار الحركة'},
-      3:{start:section[0].start,end:section[1].end,title:'الزنجبيل وتحذيراته'},
-      4:{start:section[2].start,end:section[3].end,title:'النعناع الفلفلي ومحاذيره'},
-      5:{start:section[4].start,end:section[5].end,title:'السيكران الأسود وموانع استخدامه'},
-      6:{start:section[6].start,end:section[7].end,title:'مقارنة المستحضرات ودليل الاستخدام'},
-      7:{start:section[8].start,end:section[9].end,title:'قائمة فحص الأمان والأسئلة الشائعة'},
-      8:{start:section[9].start,end:section[9].end,title:'القاعدة الذهبية وخاتمة الكتيّب'}
-    };
-    return ranges[page]||ranges[1];
+    var cue;
+    if(wholePage){
+      var ranges={
+        1:{start:0,end:section[0].end,title:'البداية والزنجبيل'},
+        2:{start:0,end:section[0].end,title:'مقدمة الكتيّب وفهم دوار الحركة'},
+        3:{start:65,end:section[1].end,title:'الزنجبيل وتحذيراته'},
+        4:{start:section[2].start,end:section[3].end,title:'النعناع الفلفلي ومحاذيره'},
+        5:{start:section[4].start,end:section[5].end,title:'السيكران الأسود وموانع استخدامه'},
+        6:{start:section[6].start,end:section[7].end,title:'مقارنة المستحضرات ودليل الاستخدام'},
+        7:{start:section[8].start,end:845.8,title:'قائمة فحص الأمان والأسئلة الشائعة'},
+        8:{start:845.8,end:section[9].end,title:'القاعدة الذهبية وخاتمة الكتيّب'}
+      };
+      return ranges[page]||ranges[1];
+    }
+    var value=String(text||'');
+    var practical=/(?:دليل الاستخدام|خطوة|توقيت|نصف ساعة|نص ساعة|الرحلة|مستنشق|إرشاد|طريقة الاستخدام|مقعد|تهوية|هاتف)/i.test(value);
+    var question=/(?:سؤال|أسئلة|شائع|ليه|لماذا|إمتى|متى|القاعدة الذهبية|استفسار)/i.test(value);
+    if(page<=2)return section[0];
+    if(page===3){
+      cue=safety==='caution'?section[1]:{sectionIndex:0,start:65,end:section[0].end,title:'الزنجبيل واستخدامه'};
+      return cue;
+    }
+    if(page===4)return safety==='caution'?section[3]:section[2];
+    if(page===5)return safety==='caution'?section[5]:section[4];
+    if(page===6)return practical?section[7]:section[6];
+    if(page===7)return question?section[9]:section[8];
+    if(page>=8)return {sectionIndex:9,start:845.8,end:section[9].end,title:'القاعدة الذهبية وخاتمة الكتيّب'};
+    return section[0];
   }
 
-  function playPatientAudioExcerpt(pageNumber,request,cue,excerptLabel){
+  function normalizeAudioToken(value){
+    var token=String(value||'').toLowerCase();
+    try{if(token.normalize)token=token.normalize('NFKC');}catch(error){}
+    return token.replace(/[\u064b-\u065f\u0670\u06d6-\u06ed]/g,'').replace(/\u0640/g,'')
+      .replace(/[أإآٱ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه')
+      .replace(/ؤ/g,'و').replace(/ئ/g,'ي');
+  }
+
+  function tokenizeAudioText(value){
+    var source=String(value||'');
+    var pattern=/[\u0621-\u063a\u0640\u0641-\u064a\u066e-\u06d3\u06fa-\u06fc\u0750-\u077f\u08a0-\u08ffA-Za-z0-9]+/g;
+    var tokens=[];
+    var match;
+    while((match=pattern.exec(source))){
+      var normalized=normalizeAudioToken(match[0]);
+      if(normalized)tokens.push({raw:match[0],text:normalized,start:match.index,end:pattern.lastIndex});
+    }
+    return tokens;
+  }
+
+  var audioStopWords={
+    'من':1,'في':1,'على':1,'الى':1,'عن':1,'مع':1,'ما':1,'مش':1,'هو':1,'هي':1,'هم':1,'هن':1,
+    'هذا':1,'هذه':1,'ذلك':1,'الذي':1,'التي':1,'ولا':1,'لكن':1,'وقد':1,'كان':1,'او':1,'ان':1,
+    'لو':1,'كل':1,'اي':1,'ثم':1,'بعد':1,'قبل':1,'بين':1,'كما':1,'لما':1,'ده':1,'دي':1,'دا':1
+  };
+
+  function audioTokenForms(value){
+    var initial=normalizeAudioToken(value);
+    var forms=[];
+    var pending=[initial];
+    var seen=Object.create(null);
+    var prefixes=['وال','بال','كال','فال','لل'];
+    while(pending.length&&forms.length<12){
+      var token=pending.shift();
+      if(!token||seen[token])continue;
+      seen[token]=true;
+      forms.push(token);
+      if(!/[\u0600-\u06ff]/.test(token))continue;
+      prefixes.forEach(function(prefix){
+        if(token.indexOf(prefix)===0&&token.length-prefix.length>=3)pending.push(token.slice(prefix.length));
+      });
+      if(token.indexOf('ال')===0&&token.length>5)pending.push(token.slice(2));
+      if(/^[وفبكل]/.test(token)&&token.length>4)pending.push(token.slice(1));
+    }
+    return forms;
+  }
+
+  function audioWordsMatch(first,second){
+    if(!first||!second)return false;
+    var firstForms=audioTokenForms(first);
+    var secondForms=audioTokenForms(second);
+    for(var a=0;a<firstForms.length;a++){
+      for(var b=0;b<secondForms.length;b++){
+        var left=firstForms[a],right=secondForms[b];
+        if(left===right)return true;
+        var shorter=left.length<=right.length?left:right;
+        var longer=left.length>right.length?left:right;
+        if(shorter.length>=4&&longer.indexOf(shorter)===0)return true;
+      }
+    }
+    return false;
+  }
+
+  function isUsefulAudioToken(token){
+    return !!token&&token.length>=3&&!Object.prototype.hasOwnProperty.call(audioStopWords,token);
+  }
+
+  function punctuationPauseUnits(value){
+    var text=String(value||'');
+    return (text.match(/[.!?؟؛]/g)||[]).length*2.1
+      +(text.match(/[,،:;]/g)||[]).length*1.05
+      +(text.match(/\n/g)||[]).length*2.4;
+  }
+
+  // Section boundaries are timed; per-word positions below are proportional estimates, not recorded word timestamps.
+  function timedAudioTokens(segment){
+    var text=String(segment&&segment.text||'');
+    var tokens=tokenizeAudioText(text);
+    var totalUnits=0;
+    var cursor=0;
+    tokens.forEach(function(token){
+      totalUnits+=punctuationPauseUnits(text.slice(cursor,token.start));
+      token.unitStart=totalUnits;
+      totalUnits+=Math.max(2.1,token.raw.length*.86+.4);
+      token.unitEnd=totalUnits;
+      cursor=token.end;
+    });
+    totalUnits+=punctuationPauseUnits(text.slice(cursor));
+    if(!totalUnits)totalUnits=1;
+    var start=Number(segment.startSeconds)||0;
+    var end=Number(segment.endSeconds)||start;
+    var duration=Math.max(0,end-start);
+    tokens.forEach(function(token){
+      token.audioStart=start+duration*(token.unitStart/totalUnits);
+      token.audioEnd=start+duration*(token.unitEnd/totalUnits);
+    });
+    return tokens;
+  }
+
+  function patientAudioTokensForCue(entry,cue){
+    var source=entry&&entry.tokens?entry.tokens:timedAudioTokens(entry&&entry.segment?entry.segment:entry);
+    var cueStart=Number(cue&&cue.start)||0;
+    var cueEnd=Number(cue&&cue.end)||Infinity;
+    return source.filter(function(token){
+      return token.audioEnd>=cueStart-.25&&token.audioStart<=cueEnd+.25;
+    });
+  }
+
+  function patientAudioTimedSegmentForCue(cue){
+    if(!cue||!patientAudioTimedSegments.length)return null;
+    var requestedIndex=typeof cue.sectionIndex==='number'?cue.sectionIndex:
+      (typeof cue.index==='number'?cue.index:null);
+    if(requestedIndex!==null){
+      for(var i=0;i<patientAudioTimedSegments.length;i++){
+        if(patientAudioTimedSegments[i].index===requestedIndex)return patientAudioTimedSegments[i];
+      }
+    }
+    var cueStart=Number(cue.start)||0;
+    var cueEnd=Number(cue.end)||Infinity;
+    var middle=cueStart+(cueEnd-cueStart)/2;
+    var best=null;
+    var distance=Infinity;
+    patientAudioTimedSegments.forEach(function(entry){
+      var start=Number(entry.segment.startSeconds)||0;
+      var end=Number(entry.segment.endSeconds)||start;
+      if(end<cueStart||start>cueEnd)return;
+      var candidateDistance=Math.abs((start+end)/2-middle);
+      if(candidateDistance<distance){distance=candidateDistance;best=entry;}
+    });
+    return best;
+  }
+
+  function contextWordsForAudio(value,ignoreWord){
+    var ignored=normalizeAudioToken(ignoreWord);
+    var seen=Object.create(null);
+    return tokenizeAudioText(value).map(function(token){return token.text;}).filter(function(token){
+      if(!isUsefulAudioToken(token)||audioWordsMatch(token,ignored)||seen[token])return false;
+      seen[token]=true;
+      return true;
+    });
+  }
+
+  function scoreAudioOccurrence(tokens,index,contextWords,target,expectedIndex,phraseMatch){
+    var token=tokens[index];
+    var requested=normalizeAudioToken(target);
+    var score=token&&audioWordsMatch(token.text,requested)?
+      (token.text===requested?3.2:2.4):0;
+    if(phraseMatch&&index>=phraseMatch.first-2&&index<=phraseMatch.last+2)score+=2.2;
+    if(typeof expectedIndex==='number'&&isFinite(expectedIndex))score-=Math.abs(index-expectedIndex)*.32;
+    contextWords.forEach(function(query){
+      if(token&&audioWordsMatch(query,token.text))return;
+      var nearest=Infinity;
+      for(var offset=-12;offset<=12;offset++){
+        if(!offset)continue;
+        var candidate=tokens[index+offset];
+        if(candidate&&audioWordsMatch(query,candidate.text))nearest=Math.min(nearest,Math.abs(offset));
+      }
+      if(nearest<Infinity)score+=(1+Math.min(1.5,query.length*.12))/(1+nearest*.22);
+    });
+    return score;
+  }
+
+  function patientAudioWordCue(entry,cue,requestedWord,contextText,phraseMatch,selectedWord){
+    if(!entry)return null;
+    var tokens=patientAudioTokensForCue(entry,cue);
+    var requested=normalizeAudioToken(requestedWord);
+    if(!requested||!tokens.length)return null;
+    var queryTokens=tokenizeAudioText(contextText);
+    var selectedStart=selectedWord&&typeof selectedWord.start==='number'?selectedWord.start:-1;
+    var targetQueryIndex=-1;
+    if(selectedStart>=0){
+      var queryDistance=Infinity;
+      queryTokens.forEach(function(token,index){
+        var distance=Math.abs(token.start-selectedStart);
+        if(distance<queryDistance){queryDistance=distance;targetQueryIndex=index;}
+      });
+    }
+    var expectedIndex=null;
+    if(phraseMatch&&phraseMatch.last>=phraseMatch.first){
+      var fraction=selectedStart>=0?selectedStart/Math.max(1,String(contextText||'').length):.5;
+      expectedIndex=phraseMatch.first+Math.max(0,Math.min(1,fraction))*(phraseMatch.last-phraseMatch.first);
+    }
+    var matches=[];
+    tokens.forEach(function(token,index){
+      if(audioWordsMatch(token.text,requested))matches.push({token:token,index:index});
+    });
+    if(phraseMatch&&matches.length){
+      var nearPhrase=matches.filter(function(item){return item.index>=phraseMatch.first-3&&item.index<=phraseMatch.last+3;});
+      if(nearPhrase.length)matches=nearPhrase;
+      else matches=[];
+    }
+    var contextWords=contextWordsForAudio(contextText,requestedWord);
+    if(matches.length){
+      var best=matches[0];
+      var bestScore=-Infinity;
+      matches.forEach(function(item){
+        var score=scoreAudioOccurrence(tokens,item.index,contextWords,requested,expectedIndex,phraseMatch);
+        if(score>bestScore){bestScore=score;best=item;}
+      });
+      return {token:best.token,index:best.index,exact:normalizeAudioToken(best.token.raw)===requested,inferred:false};
+    }
+    if(phraseMatch&&phraseMatch.matches&&phraseMatch.matches.length){
+      var nearestRecord=phraseMatch.matches[0];
+      var nearestDistance=Infinity;
+      phraseMatch.matches.forEach(function(record){
+        var distance=targetQueryIndex>=0?Math.abs(record.queryIndex-targetQueryIndex):
+          Math.abs(record.audioIndex-expectedIndex);
+        if(distance<nearestDistance){nearestDistance=distance;nearestRecord=record;}
+      });
+      var inferredToken=tokens[nearestRecord.audioIndex];
+      if(inferredToken)return {token:inferredToken,index:nearestRecord.audioIndex,exact:false,inferred:true};
+    }
+    return null;
+  }
+
+  function patientAudioPhraseCue(entry,cue,text,selectedWord){
+    if(!entry)return null;
+    var tokens=patientAudioTokensForCue(entry,cue);
+    var query=tokenizeAudioText(text).filter(function(token){return isUsefulAudioToken(token.text);});
+    if(!tokens.length)return null;
+    var best=null;
+    if(query.length){
+      var windowSize=Math.max(4,Math.min(48,query.length+8));
+      var uniqueQuery=query.filter(function(token,index){
+        for(var earlier=0;earlier<index;earlier++){
+          if(audioWordsMatch(query[earlier].text,token.text))return false;
+        }
+        return true;
+      });
+      var totalWeight=uniqueQuery.reduce(function(total,token){return total+1+Math.min(1.5,token.text.length*.12);},0)||1;
+      for(var startIndex=0;startIndex<tokens.length;startIndex++){
+        var stop=Math.min(tokens.length,startIndex+windowSize);
+        var used={};
+        var records=[];
+        var matchedWeight=0;
+        uniqueQuery.forEach(function(queryToken,queryIndex){
+          var fraction=uniqueQuery.length>1?queryIndex/(uniqueQuery.length-1):.5;
+          var expected=startIndex+fraction*Math.max(0,stop-startIndex-1);
+          var candidate=-1;
+          var candidateDistance=Infinity;
+          for(var audioIndex=startIndex;audioIndex<stop;audioIndex++){
+            if(used[audioIndex]||!audioWordsMatch(queryToken.text,tokens[audioIndex].text))continue;
+            var distance=Math.abs(audioIndex-expected);
+            if(distance<candidateDistance){candidateDistance=distance;candidate=audioIndex;}
+          }
+          if(candidate>=0){
+            used[candidate]=true;
+            records.push({queryIndex:queryToken.start,audioIndex:candidate,query:queryToken.text});
+            matchedWeight+=1+Math.min(1.5,queryToken.text.length*.12);
+          }
+        });
+        var minimumMatches=uniqueQuery.length===1?1:Math.max(2,Math.ceil(uniqueQuery.length*.23));
+        if(records.length<minimumMatches)continue;
+        var positions=records.map(function(record){return record.audioIndex;});
+        var first=Math.min.apply(Math,positions);
+        var last=Math.max.apply(Math,positions);
+        var inOrder=0;
+        var orderedRecords=records.slice().sort(function(a,b){return a.queryIndex-b.queryIndex;});
+        for(var orderIndex=1;orderIndex<orderedRecords.length;orderIndex++){
+          if(orderedRecords[orderIndex].audioIndex>=orderedRecords[orderIndex-1].audioIndex)inOrder++;
+        }
+        var orderRatio=orderedRecords.length>1?inOrder/(orderedRecords.length-1):1;
+        var coverage=matchedWeight/totalWeight;
+        var gapRatio=Math.max(0,(last-first+1-records.length)/Math.max(1,last-first+1));
+        var score=coverage+(records.length/uniqueQuery.length)*.18+orderRatio*.12-gapRatio*.08;
+        if(!best||score>best.score||
+          (score===best.score&&last-first<best.last-best.first)){
+          best={score:score,first:first,last:last,matches:records,coverage:coverage,
+            matchedCount:records.length,queryCount:uniqueQuery.length};
+        }
+      }
+      if(best&&uniqueQuery.length>1&&best.coverage<.2)best=null;
+    }
+    var wordCue=selectedWord?patientAudioWordCue(entry,cue,selectedWord.raw,text,best,selectedWord):null;
+    if(!best&&!wordCue)return null;
+    var startToken=wordCue?wordCue.token:(tokens[best.first]);
+    var endToken=best?tokens[best.last]:startToken;
+    if(!startToken||!endToken)return null;
+    var cueStart=Number(cue.start)||0;
+    var cueEnd=Number(cue.end)||Number(entry.segment.endSeconds)||startToken.audioEnd;
+    var start=Math.max(cueStart,startToken.audioStart-.16);
+    var end=Math.min(cueEnd,endToken.audioEnd+.22);
+    var minimumExcerptSeconds=4.25;
+    if(wordCue)end=Math.min(cueEnd,Math.max(end,start+minimumExcerptSeconds));
+    if(end-start<minimumExcerptSeconds)end=Math.min(cueEnd,start+minimumExcerptSeconds);
+    if(end<=start)return null;
+    return {start:start,end:end,matched:true,word:wordCue?wordCue.token.raw:null,
+      wordExact:wordCue?wordCue.exact:false,wordInferred:wordCue?wordCue.inferred:false,
+      phrase:!!best,matchedWords:best?best.matchedCount:1};
+  }
+
+  function playPatientAudioExcerpt(pageNumber,safety,text,wholePage,request,cue,excerptLabel){
     if(!patientFullAudio)return false;
-    cue=cue||patientAudioCueForPage(pageNumber);
+    cue=cue||patientAudioCueForPage(pageNumber,safety,text,wholePage);
     if(!cue)return false;
     var start=Math.max(0,Number(cue.start)||0);
     var cueEnd=Math.min(Number(patientFullAudio.duration)||Number(cue.end)||921.96,Number(cue.end)||921.96);
@@ -594,7 +974,7 @@
     patientAudioExcerptStart=start;
     patientAudioExcerptEnd=end;
     patientAudioExcerptPage=Number(pageNumber)||1;
-    patientAudioExcerptLabel=excerptLabel||'بداية مقطع الصفحة '+digits(patientAudioExcerptPage)+'؛ دون مزامنة مع السطر.';
+    patientAudioExcerptLabel=excerptLabel||'مقطع مرتبط بصفحة '+digits(patientAudioExcerptPage)+' بتوقيت تقريبي.';
     if(patientAudioStatus)patientAudioStatus.textContent='جارٍ الانتقال إلى '+patientAudioExcerptLabel+' في التسجيل المتصل بصوت رجالي باللهجة المصرية.';
     updatePageReadButton();
 
@@ -618,7 +998,7 @@
           updatePatientAudioButton();
           updatePageReadButton();
           if(patientAudioStatus)patientAudioStatus.textContent=wasMuted
-            ?'المقطع يعمل لكن مشغّل الصوت مكتوم؛ أزل الكتم لسماع الصوت.'
+            ?'المقطع يعمل لكن الصوت مكتوم؛ ألغِ الكتم من إعدادات الجهاز.'
               :'يُشغّل الآن '+patientAudioExcerptLabel+' من التسجيل المتصل بصوت رجالي باللهجة المصرية.';
         }
         return;
@@ -634,7 +1014,7 @@
       patientAudioExcerptLabel='';
       speechActive=false;
       updatePageReadButton();
-      if(patientAudioStatus)patientAudioStatus.textContent='تعذّر الوصول إلى موضع المقطع. لم أبدأ التسجيل من أوله؛ يمكنك تشغيله يدويًا من مشغّل الصوت أدناه.';
+      if(patientAudioStatus)patientAudioStatus.textContent='تعذّر الوصول إلى موضع المقطع. لم يبدأ التشغيل؛ جرّب كلمة أخرى أو أعد تحميل الصفحة.';
       updatePatientAudioButton();
     }
     function seekAndPlay(){
@@ -665,50 +1045,89 @@
     return true;
   }
 
-  function readPatientAudio(safety,pageNumber){
+  function readPatientAudio(value,safety,pageNumber,wholePage,selectedWord){
     if(!patientFullAudio)return false;
     if(!patientFullAudio.paused&&!patientAudioIsExcerpt){
       patientAudioSuppressPauseStatus=true;
       patientFullAudio.pause();
     }
     stopSpeech();
-    var cue=patientAudioCueForPage(pageNumber);
-    if(!cue){
-      if(patientAudioStatus)patientAudioStatus.textContent='تعذّر تحديد القسم الصوتي المرتبط بهذا النص. استخدم مشغّل التسجيل الكامل أدناه.';
-      return false;
-    }
     speechActive=true;
     patientAudioIsExcerpt=true;
     patientAudioExcerptReady=false;
     patientAudioExcerptStart=null;
     patientAudioExcerptEnd=null;
     patientAudioExcerptPage=Number(pageNumber)||1;
-    patientAudioExcerptLabel='مقطع الصفحة من بداية القسم «'+cue.title+'»؛ التسجيل متاح على مستوى الصفحة.';
+    patientAudioExcerptLabel='جارٍ تجهيز موضع الاستماع';
     updatePageReadButton();
     var request=speechRequest;
-    var label=patientAudioExcerptLabel;
-    if(patientAudioStatus)patientAudioStatus.textContent='لا يتوفر نطق عربي في هذا المتصفح؛ يجري تشغيل المقطع المسجل المرتبط بالصفحة.';
+    var preparationFinished=false;
+    if(patientAudioStatus)patientAudioStatus.textContent='جارٍ تجهيز موضع الاستماع. سيبدأ الصوت بعد الانتقال إلى النص المحدد.';
     primePatientAudioFromGesture(request);
 
-    function startExcerpt(){
-      if(request!==speechRequest)return;
-      if(!playPatientAudioExcerpt(pageNumber,request,cue,label)){
-        if(patientAudioGesturePrimed)restorePatientAudioGestureMute();
-        patientAudioIsExcerpt=false;
-        patientAudioExcerptReady=false;
-        patientAudioExcerptStart=null;
-        patientAudioExcerptEnd=null;
-        patientAudioExcerptPage=0;
-        patientAudioExcerptLabel='';
-        speechActive=false;
-        updatePageReadButton();
-        if(patientAudioStatus)patientAudioStatus.textContent='تعذّر تشغيل القسم المرتبط. استخدم مشغّل التسجيل الكامل أدناه.';
+    function clearPreparationTimer(){
+      if(patientAudioPrepareTimer){window.clearTimeout(patientAudioPrepareTimer);patientAudioPrepareTimer=null;}
+    }
+    function fail(message){
+      if(request!==speechRequest||preparationFinished)return;
+      preparationFinished=true;
+      clearPreparationTimer();
+      if(patientAudioGesturePrimed){
+        if(!patientFullAudio.paused)patientAudioSuppressPauseStatus=true;
+        try{patientFullAudio.pause();}catch(error){}
+        restorePatientAudioGestureMute();
       }
+      patientAudioIsExcerpt=false;
+      patientAudioExcerptReady=false;
+      patientAudioExcerptStart=null;
+      patientAudioExcerptEnd=null;
+      patientAudioExcerptPage=0;
+      patientAudioExcerptLabel='';
+      speechActive=false;
+      updatePageReadButton();
+      if(patientAudioStatus)patientAudioStatus.textContent=message;
+    }
+    function startExcerpt(cue,label){
+      if(request!==speechRequest||preparationFinished)return;
+      if(!playPatientAudioExcerpt(pageNumber,safety,value,wholePage,request,cue,label)){
+        fail('تعذّر تحديد موضع الاستماع. جرّب كلمة أو سطرًا آخر.');
+        return;
+      }
+      preparationFinished=true;
+      clearPreparationTimer();
+    }
+    function prepareAndPlay(){
+      if(request!==speechRequest||preparationFinished)return;
+      var cue=patientAudioCueForPage(pageNumber,safety,value,wholePage);
+      if(!cue){fail('تعذّر تحديد موضع الاستماع. جرّب كلمة أو سطرًا آخر.');return;}
+      var label='مقطع الصفحة ضمن نطاق الفصل؛ لا تتوفر مزامنة دقيقة كلمة بكلمة.';
+      if(!wholePage){
+        if(!patientAudioTimedSegments.length){
+          fail('تعذّر تحميل نص التسجيل للمطابقة؛ أعد تحميل الصفحة وحاول مرة أخرى.');
+          return;
+        }
+        var entry=patientAudioTimedSegmentForCue(cue);
+        var refined=entry?patientAudioPhraseCue(entry,cue,value,selectedWord):null;
+        if(!refined){
+          fail('لم أعثر على مقطع مناسب لهذا النص. جرّب الضغط على كلمة أو سطر قريب منها.');
+          return;
+        }
+        cue=refined;
+        label=selectedWord&&refined.word&&!refined.wordInferred
+          ?'موضع تقريبي قرب «'+selectedWord.raw+'»؛ التسجيل لا يتضمن توقيتات كلمة بكلمة.'
+          :'مقطع قريب من السطر المحدد؛ التوقيت تقديري لعدم توفر مزامنة كلمة بكلمة.';
+      }
+      function play(){startExcerpt(cue,label);}
+      if(safety==='caution'&&soundEnabled&&PageAudio){
+        playWarningSound(request).then(function(){if(request===speechRequest)play();});
+      }else play();
     }
 
-    if(safety==='caution'&&soundEnabled&&PageAudio){
-      playWarningSound(request).then(function(){if(request===speechRequest)startExcerpt();});
-    }else startExcerpt();
+    patientAudioPrepareTimer=window.setTimeout(function(){
+      fail('تعذّر تجهيز مقطع التسجيل؛ أعد تحميل الصفحة وحاول مرة أخرى.');
+    },15000);
+    if(wholePage)prepareAndPlay();
+    else patientAudioScriptReady.then(prepareAndPlay);
     return true;
   }
 
@@ -724,7 +1143,7 @@
         patientAudioIsExcerpt=false;patientAudioExcerptReady=false;patientAudioExcerptEnd=null;patientAudioExcerptStart=null;
         patientAudioExcerptPage=0;patientAudioExcerptLabel='';speechActive=false;updatePageReadButton();
       }
-      if(patientAudioStatus)patientAudioStatus.textContent='تعذّر تشغيل التسجيل. اضغط زر التشغيل في مشغّل الصوت.';
+      if(patientAudioStatus)patientAudioStatus.textContent='تعذّر تشغيل مقطع التسجيل؛ حدّث الصفحة ثم حاول مرة أخرى.';
       return;
     }
     if(playback&&typeof playback.catch==='function')playback.catch(function(){
@@ -734,7 +1153,7 @@
         patientAudioIsExcerpt=false;patientAudioExcerptEnd=null;patientAudioExcerptStart=null;
         patientAudioExcerptPage=0;patientAudioExcerptLabel='';speechActive=false;updatePageReadButton();
       }
-      if(patientAudioStatus)patientAudioStatus.textContent='تعذّر تشغيل التسجيل. اضغط زر التشغيل في مشغّل الصوت.';
+      if(patientAudioStatus)patientAudioStatus.textContent='تعذّر تشغيل مقطع التسجيل؛ حدّث الصفحة ثم حاول مرة أخرى.';
       updatePatientAudioButton();
     });
   }
@@ -756,18 +1175,10 @@
     var session=speechSession;
     speechActive=true;
     updatePageReadButton();
-    if(patientFullAudio&&patientAudioStatus){
-      patientAudioStatus.textContent='تُقرأ النصوص المحددة بصوت اللغة العربية المتاح في الجهاز؛ للاستماع إلى التسجيل المصري الكامل استخدم المشغّل أدناه.';
-    }
 
     function speakNext(){
       if(session!==speechSession)return;
-      if(!chunks.length){
-        speechActive=false;
-        updatePageReadButton();
-        if(patientFullAudio&&patientAudioStatus)patientAudioStatus.textContent='انتهت قراءة النص المحدد بصوت المتصفح. يمكنك تشغيل التسجيل المصري الكامل من المشغّل أدناه.';
-        return;
-      }
+      if(!chunks.length){speechActive=false;updatePageReadButton();return;}
       var utterance;
       try{utterance=new SpeechUtterance(chunks.shift());}
       catch(error){speechActive=false;updatePageReadButton();return;}
@@ -784,7 +1195,6 @@
         speechActive=false;
         updatePageReadButton();
         if(event&&event.error&&event.error!=='canceled'&&event.error!=='interrupted'){
-          if(patientFullAudio&&patientAudioStatus)patientAudioStatus.textContent='تعذرت القراءة بصوت المتصفح. استخدم مشغّل التسجيل المصري الكامل أدناه.';
           announceHighlight('تعذرت القراءة الصوتية. جرّب صوتًا آخر من إعدادات القراءة.');
         }
       };
@@ -831,14 +1241,10 @@
     });
   }
 
-  function readText(value,safety,pageNumber,wholePage){
-    if(patientFullAudio){
-      if(patientAudioStatus)patientAudioStatus.textContent='لا يوجد توقيت موثّق لهذا السطر داخل التسجيل. لن أستخدم صوت الجهاز أو موضعًا تقديريًا؛ شغّل التسجيل المصري الكامل من المشغّل.';
-      return false;
-    }
+  function readText(value,safety,pageNumber,wholePage,selectedWord){
+    if(patientFullAudio)return readPatientAudio(value,safety,pageNumber,wholePage,selectedWord);
     pausePatientAudioForSpeech();
-    var speechAvailable=!!(speechSynthesis&&SpeechUtterance&&typeof speechSynthesis.speak==='function');
-    if(!speechAvailable||!splitSpeechText(value).length)return false;
+    if(!speechSynthesis||!SpeechUtterance||typeof speechSynthesis.speak!=='function'||!splitSpeechText(value).length)return false;
     if(safety!=='caution')return speakText(value);
     if(!soundEnabled&&PageAudio)return speakText(value);
     stopSpeech();
@@ -872,11 +1278,9 @@
     button.style.height=(bottom-top)+'%';
     button.setAttribute('data-safety',safety);
     button.setAttribute('aria-pressed','false');
-    button.setAttribute('aria-label',patientFullAudio
-      ?'تظليل '+(isHeader?'رؤوس الأعمدة':'صف '+label)+' من '+table.title+'، صفحة '+digits(pageIndex+1)+'؛ المزامنة الصوتية قيد المراجعة'
-      :'تظليل وقراءة '+(isHeader?'رؤوس الأعمدة':'صف '+label)+' من '+table.title+'، صفحة '+digits(pageIndex+1));
+    button.setAttribute('aria-label',(patientFullAudio?'تظليل وتشغيل المقطع المرتبط بـ':'تظليل وقراءة ')+(isHeader?'رؤوس الأعمدة':'صف '+label)+' من '+table.title+'، صفحة '+digits(pageIndex+1));
     button.title=patientFullAudio
-      ?'تظليل فقط؛ لا توجد مزامنة صوتية معتمدة لهذا الجدول بعد'
+      ?(isHeader?'تظليل وتشغيل التسجيل المرتبط بعناوين الجدول':'تظليل وتشغيل التسجيل المرتبط بصف '+label)
       :(isHeader?'تظليل عناوين الجدول وقراءتها':'تظليل وقراءة صف '+label);
     button.addEventListener('click',function(event){
       event.stopPropagation();
@@ -898,7 +1302,7 @@
       visual.tabIndex=0;
       visual.setAttribute('role','group');
       visual.setAttribute('aria-label',patientFullAudio
-        ?'محتوى '+title+'؛ اضغط على كلمة أو سطر لتظليله فقط. المزامنة الصوتية الدقيقة قيد المراجعة؛ استخدم مشغّل التسجيل المصري الكامل أدناه.'
+        ?'محتوى '+title+'؛ اضغط على كلمة أو سطر لتظليله وتشغيل مقطع قريب من موضعه في التسجيل المصري بتوقيت تقريبي، أو اختر صفًا من الجدول لسماع مقطع قريب من نصه.'
         :'محتوى '+title+'؛ اضغط على سطر لقراءته وتظليله، أو اختر صفًا من الجدول لقراءته كاملًا.');
       figure.insertBefore(visual,image);
       visual.appendChild(image);
@@ -1303,12 +1707,7 @@
   initializeSpeechSettings();
   if(pageReadButton){
     pageReadButton.addEventListener('click',function(){
-      if(speechActive){
-        var stoppedExcerpt=patientAudioIsExcerpt;
-        stopSpeech();
-        if(patientFullAudio&&!stoppedExcerpt&&patientAudioStatus)patientAudioStatus.textContent='توقفت القراءة بصوت المتصفح.';
-        return;
-      }
+      if(speechActive){stopSpeech();return;}
       var transcript=pages[current].querySelector('.page-transcript pre');
       var text=transcript?transcript.textContent:(pages[current].getAttribute('data-page-title')||'');
       readText(text,safetyForText(text),current+1,true);
@@ -1331,7 +1730,7 @@
       if(patientAudioStatus)patientAudioStatus.textContent=patientAudioIsExcerpt
         ?(patientAudioGesturePrimed
           ?'جارٍ الانتقال إلى الموضع المحدد؛ الصوت مكتوم مؤقتًا لتفادي بدء التسجيل من موضع خاطئ.'
-          :'يُشغّل الآن '+(patientAudioExcerptLabel||('المقطع المرتبط بصفحة '+digits(patientAudioExcerptPage)))+' من التسجيل المتصل بصوت رجالي باللهجة المصرية.')
+          :'يُشغّل الآن '+(patientAudioExcerptLabel||('مقطع مرتبط بصفحة '+digits(patientAudioExcerptPage)+' بتوقيت تقريبي'))+' من التسجيل المتصل بصوت رجالي باللهجة المصرية.')
         :'يُشغّل الآن التسجيل الكامل المتصل بصوت رجالي باللهجة المصرية.';
     });
     patientFullAudio.addEventListener('pause',function(){
@@ -1342,7 +1741,7 @@
         return;
       }
       if(patientAudioIsExcerpt){speechActive=false;updatePageReadButton();}
-      if(!patientFullAudio.ended&&patientAudioStatus)patientAudioStatus.textContent='توقف الاستماع مؤقتًا. يمكنك استكماله من مشغّل الصوت.';
+      if(!patientFullAudio.ended&&patientAudioStatus)patientAudioStatus.textContent='توقّف المقطع مؤقتًا. اضغط كلمة أو زر الصفحة للمتابعة.';
     });
     patientFullAudio.addEventListener('timeupdate',function(){
       if(!patientAudioIsExcerpt||!patientAudioExcerptReady||patientAudioExcerptEnd===null||patientFullAudio.currentTime<patientAudioExcerptEnd)return;
@@ -1356,7 +1755,7 @@
       speechActive=false;
       patientFullAudio.pause();
       updatePageReadButton();
-      if(patientAudioStatus)patientAudioStatus.textContent='انتهى المقطع المحدد. يمكنك متابعة التسجيل الكامل من مشغّل الصوت.';
+      if(patientAudioStatus)patientAudioStatus.textContent='انتهى المقطع. اضغط كلمة أو زر الصفحة للاستماع مرة أخرى.';
     });
     patientFullAudio.addEventListener('seeking',function(){
       if(!patientAudioIsExcerpt||!patientAudioExcerptReady||patientAudioExcerptStart===null||patientAudioExcerptEnd===null)return;

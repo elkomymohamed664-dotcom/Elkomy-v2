@@ -51,21 +51,6 @@ h1,h2,p{margin-top:0}
 .welcome-audio-button[aria-pressed="true"]{border-color:rgba(165,210,179,.58);background:rgba(165,210,179,.1);color:#d7f0df}
 .welcome-audio-status{grid-column:1/-1;margin:1px 0 0;color:#8fa498;font-size:8px;line-height:1.5}
 .welcome-audio audio{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
-.audio-sync-update{max-width:910px;display:grid;grid-template-columns:43px minmax(0,1fr) auto;align-items:center;gap:12px;margin:0 auto 16px;padding:14px 16px;border:1px solid rgba(216,187,130,.28);border-right:3px solid var(--gold);border-radius:11px;background:linear-gradient(112deg,rgba(31,53,44,.86),rgba(12,34,34,.95));box-shadow:0 9px 24px rgba(0,0,0,.12)}
-.audio-sync-icon{display:grid;place-items:center;width:39px;height:39px;border:1px solid rgba(216,187,130,.34);border-radius:50%;background:rgba(216,187,130,.07);color:var(--gold-bright)}
-.audio-sync-icon svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.audio-sync-copy{min-width:0}
-.audio-sync-kicker{margin:0;color:var(--gold);font-size:9px;font-weight:850;letter-spacing:.04em}
-.audio-sync-copy h2{margin:2px 0 2px;color:var(--ink);font-size:14px;line-height:1.5}
-.audio-sync-copy p:not(.audio-sync-kicker){margin:0;color:#bdc9be;font-size:10px;line-height:1.7}
-.audio-sync-copy small{display:block;margin-top:2px;color:#92a79a;font-size:8px;line-height:1.5}
-.audio-sync-links{display:grid;gap:6px;justify-items:stretch;min-width:170px}
-.audio-sync-links a{display:inline-flex;align-items:center;justify-content:center;gap:4px;min-height:32px;padding:5px 10px;border:1px solid rgba(216,187,130,.34);border-radius:7px;color:var(--gold-bright);font-size:9px;font-weight:800;text-align:center;transition:background .16s,border-color .16s}
-.audio-sync-links a:hover{border-color:var(--gold);background:rgba(216,187,130,.09)}
-.audio-sync-links a:focus-visible{outline:3px solid var(--gold-bright);outline-offset:3px}
-.audio-sync-links .audio-sync-reader{border-color:rgba(165,210,179,.35);color:#cce9d5}
-.audio-sync-links .audio-sync-reader:hover{border-color:var(--green);background:rgba(165,210,179,.08)}
-.audio-sync-links span{color:#9fb0a5;font-size:8px;font-weight:600}
 .book-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin:12px auto 24px}
 .book-card{min-height:284px;display:grid;grid-template-columns:150px minmax(0,1fr);gap:22px;align-items:center;padding:21px;border:1px solid var(--line);border-radius:15px;background:linear-gradient(135deg,rgba(24,58,51,.93),rgba(12,34,34,.98));box-shadow:0 14px 34px rgba(0,0,0,.19);transition:border-color .18s,box-shadow .18s,transform .18s}
 .book-card:hover{transform:translateY(-2px);border-color:rgba(240,215,167,.6);box-shadow:0 18px 42px rgba(0,0,0,.25)}
@@ -95,8 +80,6 @@ h1,h2,p{margin-top:0}
   .institution-logos img{width:33px;height:33px}
   .academic-copy strong{font-size:12px}
   .academic-copy span{font-size:10px}
-  .audio-sync-update{grid-template-columns:39px minmax(0,1fr);align-items:start}
-  .audio-sync-links{grid-column:2;grid-template-columns:repeat(2,minmax(0,1fr));min-width:0}
   .book-grid{grid-template-columns:1fr;max-width:650px}
   .book-card{min-height:250px;grid-template-columns:140px minmax(0,1fr)}
   .cover-frame{min-height:210px}
@@ -128,14 +111,6 @@ h1,h2,p{margin-top:0}
   .welcome-audio-copy p{font-size:8px}
   .welcome-audio-button{min-height:33px;padding:5px 8px;font-size:8px}
   .welcome-audio-status{font-size:7px}
-  .audio-sync-update{grid-template-columns:32px minmax(0,1fr);gap:8px;margin-bottom:10px;padding:10px}
-  .audio-sync-icon{width:30px;height:30px}
-  .audio-sync-icon svg{width:17px;height:17px}
-  .audio-sync-copy h2{font-size:12px}
-  .audio-sync-copy p:not(.audio-sync-kicker){font-size:9px}
-  .audio-sync-copy small{font-size:7px}
-  .audio-sync-links{grid-template-columns:1fr;gap:5px}
-  .audio-sync-links a{min-height:30px;font-size:8px}
   .book-card{grid-template-columns:96px minmax(0,1fr);gap:13px;min-height:0;padding:12px;border-radius:11px}
   .cover-frame{min-height:153px;padding:4px}
   .cover-frame img{height:143px}
