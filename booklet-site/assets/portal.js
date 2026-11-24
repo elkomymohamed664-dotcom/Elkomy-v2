@@ -26,6 +26,8 @@
         setPlaying(true);
         if(status)status.textContent='يُشغَّل الآن إرشاد اختيار الإصدار.';
       }).catch(explainBlockedPlayback);
+    }else{
+      window.setTimeout(function(){if(audio.paused)explainBlockedPlayback();},350);
     }
   }
 
@@ -33,7 +35,10 @@
     if(audio.paused){playWelcome();return;}
     audio.pause();
   });
-  audio.addEventListener('play',function(){setPlaying(true);});
+  audio.addEventListener('play',function(){
+    setPlaying(true);
+    if(status)status.textContent='يُشغّل الآن إرشاد اختيار الإصدار.';
+  });
   audio.addEventListener('pause',function(){
     setPlaying(false);
     if(!audio.ended&&status)status.textContent='توقف الإرشاد مؤقتًا. اضغط الزر لاستكماله.';
