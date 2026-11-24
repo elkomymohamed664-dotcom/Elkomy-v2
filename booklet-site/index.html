@@ -115,6 +115,28 @@
     </div>
   </section>
 
+  <section class="contact-section" aria-labelledby="contact-title">
+    <div class="contact-copy">
+      <p class="eyebrow">تواصل معنا</p>
+      <h2 id="contact-title">يسعدنا استقبال استفسارك</h2>
+      <p>أرسل سؤالك أو ملاحظتك إلى فريق النشاط، وسنستخدم بياناتك للرد على رسالتك فقط.</p>
+      <div class="contact-note"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 6.5h17v11h-17z"/><path d="m4 7 8 6 8-6"/></svg><span>من فضلك لا ترسل معلومات صحية شخصية أو بيانات شديدة الخصوصية عبر النموذج.</span></div>
+    </div>
+    <form class="contact-form" id="contact-form" action="/api/contact" method="post">
+      <div class="contact-fields">
+        <label class="contact-field" for="contact-name"><span>الاسم</span><input id="contact-name" name="name" type="text" autocomplete="name" maxlength="80" required></label>
+        <label class="contact-field" for="contact-email"><span>البريد الإلكتروني</span><input id="contact-email" name="email" type="email" inputmode="email" autocomplete="email" maxlength="254" required></label>
+      </div>
+      <label class="contact-field contact-message-field" for="contact-message"><span>رسالتك</span><textarea id="contact-message" name="message" rows="4" maxlength="3000" required></textarea></label>
+      <div class="contact-honeypot" aria-hidden="true"><label for="contact-website">اترك هذا الحقل فارغًا</label><input id="contact-website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
+      <div class="contact-actions">
+        <button class="contact-submit" type="submit"><span>إرسال الرسالة</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 5l7 7-7 7"/></svg></button>
+        <p class="contact-status" id="contact-status" role="status" aria-live="polite" aria-atomic="true"></p>
+      </div>
+      <noscript><p class="contact-noscript">فعّل JavaScript لإرسال الرسالة من هذا النموذج.</p></noscript>
+    </form>
+  </section>
+
   <aside class="editorial-note"><span class="note-mark" aria-hidden="true">i</span><p><strong>تنويه علمي:</strong> المحتوى للتثقيف والتوعية، ولا يُعد تشخيصًا أو توصية علاجية. يُرجى الرجوع إلى النشرات المعتمدة واستشارة الطبيب أو الصيدلي عند الحاجة.</p></aside>
 </main>
 <footer class="wrap site-footer">

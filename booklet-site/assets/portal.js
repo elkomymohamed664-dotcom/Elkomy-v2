@@ -54,3 +54,58 @@
 
   playWelcome();
 })();
+
+(function(){
+  'use strict';
+
+  var form=document.getElementById('contact-form');
+  var status=document.getElementById('contact-status');
+  if(!form||!status)return;
+
+  var submit=form.querySelector('button[type="submit"]');
+  var submitLabel=submit&&submit.querySelector('span');
+  var originalLabel=submitLabel?submitLabel.textContent:'إرسال الرسالة';
+
+  function showStatus(message,state){
+    status.textContent=message;
+    status.setAttribute('data-state',state||'');
+  }
+
+  form.addEventListener('submit',function(event){
+    event.preventDefault();
+    if(!form.reportValidity())return;
+
+    var fields=new FormData(form);
+    var payload={
+      name:fields.get('name'),
+      email:fields.get('email'),
+      message:fields.get('message'),
+      website:fields.get('website')
+    };
+    if(submit)submit.disabled=true;
+    if(submitLabel)submitLabel.textContent='جارٍ الإرسال…';
+    showStatus('جارٍ إرسال رسالتك…','');
+
+    window.fetch(form.action,{
+      method:'POST',
+      credentials:'same-origin',
+      headers:{'Content-Type':'application/json','Accept':'application/json'},
+      body:JSON.stringify(payload)
+    }).then(function(response){
+      return response.json().catch(function(){return {};}).then(function(data){
+        if(!response.ok||!data.ok){
+          var error=new Error(data.message||'تعذّر إرسال الرسالة الآن. حاول لاحقًا.');
+          error.publicMessage=data.message||'تعذّر إرسال الرسالة الآن. حاول لاحقًا.';
+          throw error;
+        }
+        form.reset();
+        showStatus(data.message||'وصلت رسالتك بنجاح، شكرًا لتواصلك.','success');
+      });
+    }).catch(function(error){
+      showStatus(error&&error.publicMessage||'تعذّر الاتصال بخدمة البريد. تحقق من الاتصال وحاول مرة أخرى.','error');
+    }).finally(function(){
+      if(submit)submit.disabled=false;
+      if(submitLabel)submitLabel.textContent=originalLabel;
+    });
+  });
+})();
