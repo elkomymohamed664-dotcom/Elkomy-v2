@@ -36,6 +36,16 @@
     <div class="hero-rule"><span></span><p>كلية الصيدلة · جامعة المنصورة الأهلية</p><span></span></div>
   </section>
 
+  <section class="welcome-audio" aria-labelledby="welcome-audio-title">
+    <div class="welcome-audio-copy">
+      <span class="welcome-audio-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 10v4h4l5 4V6l-5 4H4Z"/><path d="M16 9a5 5 0 0 1 0 6m2-9a9 9 0 0 1 0 12"/></svg></span>
+      <div><h2 id="welcome-audio-title">إرشاد صوتي لاختيار الإصدار</h2><p>الكتيّب الأول للمريض والزائر، والمرجع الثاني للطبيب أو الصيدلي.</p></div>
+    </div>
+    <button class="welcome-audio-button" id="welcome-audio-button" type="button" aria-pressed="false"><span id="welcome-audio-button-label">استمع إلى الإرشاد</span></button>
+    <audio id="welcome-audio" src="assets/audio/patient-welcome-ar-eg.mp3" preload="auto" aria-hidden="true"></audio>
+    <p class="welcome-audio-status" id="welcome-audio-status" role="status" aria-live="polite">سيحاول المتصفح تشغيل الإرشاد عند فتح الصفحة. إذا لم يبدأ، اضغط زر الاستماع.</p>
+  </section>
+
   <section class="book-grid" aria-label="اختيار الإصدار">
     <a class="book-card patient" href="patient-book.html" aria-label="قراءة دليل المريض والزائر، ٨ صفحات كاملة">
       <span class="cover-frame"><img src="assets/patient-pages/page-01.jpg" alt="غلاف دليل الاستخدام الآمن للأعشاب في دوار السفر والحركة" width="1192" height="1686" fetchpriority="high"></span>
@@ -66,5 +76,6 @@
   <span>جامعة المنصورة الأهلية · كلية الصيدلة · قسم العقاقير</span>
   <a href="index.html">العودة إلى بوابة الإصدارات</a>
 </footer>
+<script src="assets/portal.js" defer></script>
 </body>
 </html>
