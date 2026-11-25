@@ -15,6 +15,7 @@
 | المرجع الأكاديمي الكامل (HTML) | https://elkomymohamed664-dotcom.github.io/Elkomy-v2/booklet-site/clinician-book.html |
 | اختبر نفسك + عيادة الحالات | https://elkomymohamed664-dotcom.github.io/Elkomy-v2/?v=21#/quiz |
 | جولة في الموقع | https://elkomymohamed664-dotcom.github.io/Elkomy-v2/?v=21#/guide |
+| LIPOVERSE — منصة تفاعلية لتعلّم الليبوسومات | [مجلد الموقع](./lipoverse/) — يظهر على الرابط المنشور بعد نشر التغييرات |
 
 > الرابط الأساسي فوق بيفضل شغال دايمًا — لاحقة `?v=21` مجرد كسر للكاش بعد التحديث.
 
