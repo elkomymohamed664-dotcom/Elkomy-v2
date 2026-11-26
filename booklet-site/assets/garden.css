@@ -15,14 +15,12 @@
   from{transform:translate3d(-8px,8px,0) rotate(calc(var(--tilt,0deg) - 5deg)) scale(.97)}
   to{transform:translate3d(10px,-9px,0) rotate(calc(var(--tilt,0deg) + 5deg)) scale(1.025)}
 }
-/* Real transparent cut-outs: no circular crop, plate, border, or tile. */
-.garden-specimens{position:absolute;inset:0;pointer-events:none}
-.garden-specimen{position:absolute;display:block;width:clamp(132px,17vw,224px);height:auto;opacity:.68;filter:drop-shadow(0 9px 12px rgba(0,0,0,.26));will-change:transform;animation:specimen-drift 12s ease-in-out infinite alternate}
-.garden-specimen img{display:block;width:100%;height:auto;object-fit:contain;border:0;border-radius:0;background:transparent;box-shadow:none;clip-path:none}
-.garden-specimen--ginger{top:16vh;left:3vw;--drift-x:5px;--drift-y:-9px;--turn:-2deg;animation-duration:12s}
-.garden-specimen--peppermint{top:37vh;right:2vw;width:clamp(145px,19vw,250px);--drift-x:-7px;--drift-y:-10px;--turn:2deg;animation-duration:14s;animation-delay:-4s}
-.garden-specimen--henbane{right:28vw;bottom:3vh;width:clamp(132px,16vw,212px);opacity:.60;--drift-x:5px;--drift-y:-7px;--turn:-1deg;animation-duration:13s;animation-delay:-7s}
-@keyframes specimen-drift{from{transform:translate3d(0,5px,0) rotate(calc(var(--turn,0deg) - 1deg))}to{transform:translate3d(var(--drift-x,5px),var(--drift-y,-8px),0) rotate(calc(var(--turn,0deg) + 1deg))}}
+.garden-3d-layer{position:fixed;inset:0;z-index:1;overflow:hidden;pointer-events:none;contain:strict}
+.garden-3d-canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:.68}
+.garden-fallback-plant{position:absolute;height:auto;object-fit:contain;opacity:.6;filter:drop-shadow(0 8px 12px rgba(0,0,0,.24));animation:garden-sway 11s ease-in-out infinite alternate}
+.garden-fallback-plant--ginger{width:clamp(112px,16vw,210px);left:2vw;top:16vh}
+.garden-fallback-plant--peppermint{width:clamp(122px,19vw,235px);right:1vw;top:37vh;animation-delay:-4s}
+.garden-fallback-plant--henbane{width:clamp(112px,15vw,195px);right:28vw;bottom:2vh;animation-delay:-7s}
 body>header,body>main,body>footer{position:relative;z-index:2}
 @media(max-width:760px){
   .garden-frond{opacity:.24}
@@ -31,20 +29,12 @@ body>header,body>main,body>footer{position:relative;z-index:2}
   .garden-frond--three{right:-75px}
   .garden-tree--left{left:-118px}
   .garden-tree--right{right:-128px}
-  .garden-specimen{width:clamp(100px,20vw,150px);opacity:.55}
-  .garden-specimen--ginger{left:-2vw;top:18vh}
-  .garden-specimen--peppermint{right:-3vw;top:47vh;width:clamp(112px,23vw,168px)}
-  .garden-specimen--henbane{right:29vw;bottom:2vh;width:clamp(98px,18vw,138px);opacity:.48}
-}
-@media(max-width:430px){
-  .garden-specimen{opacity:.43}
-  .garden-specimen--ginger{left:-7vw;top:19vh}
-  .garden-specimen--peppermint{right:-8vw;top:49vh}
-  .garden-specimen--henbane{right:31vw;bottom:1vh;opacity:.38}
+  .garden-3d-canvas{opacity:.58}
 }
 @media(prefers-reduced-motion:reduce){
   .garden-frond,.garden-tree{animation:none!important;transform:rotate(var(--tilt,0deg))}
-  .garden-specimen{animation:none!important;transform:rotate(var(--turn,0deg))}
+  .garden-fallback-plant{animation:none!important}
+  .garden-3d-canvas{opacity:.58}
 }
 @media print{
   .garden-background{display:none!important}
