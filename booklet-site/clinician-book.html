@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#081e1f">
+<meta name="theme-color" content="#f7f5ec">
 <meta name="description" content="Medicinal Plants in Motion — مرجع أكاديمي كامل للطبيب والصيدلي من كلية الصيدلة، جامعة المنصورة الأهلية.">
 <title>المرجع الأكاديمي للطبيب والصيدلي | PHYTO MOTION</title>
 <link rel="stylesheet" href="assets/flipbook.css">
@@ -35,6 +35,18 @@
     <p>تصفّح صفحات المرجع كاملة. يتوفر النص الكامل لكل صفحة للمراجعة والبحث والنسخ.</p>
   </section>
   <p class="reader-hint"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.5A2.5 2.5 0 0 1 7.5 3H20v16H7.5A2.5 2.5 0 0 0 5 21V5.5Z"/><path d="M5 18.5A2.5 2.5 0 0 1 7.5 16H20M9 7h7M9 10h7M9 13h4"/></svg><span>تنقّل بين الصفحات باستخدام الأزرار أو مفاتيح الأسهم، ويمكن السحب على الهاتف.</span></p>
+  <section class="reader-tools" aria-label="أدوات البحث والتنقل">
+    <form class="transcript-search" id="transcript-search" role="search">
+      <label class="reader-search-box" for="reader-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg><input id="reader-search" type="search" placeholder="ابحث في نص صفحات الإصدار" autocomplete="off"></label>
+      <button class="tool-button search-submit" type="submit">ابحث في النص</button>
+    </form>
+    <div class="search-results" id="search-results" aria-live="polite"></div>
+    <div class="reader-quick-tools">
+      <label class="contents-picker">انتقل إلى صفحة<select id="page-select" aria-label="انتقل مباشرة إلى صفحة"></select></label>
+      <button class="tool-button" id="bookmark-toggle" type="button" aria-pressed="false">☆ حفظ الصفحة</button>
+      <button class="tool-button" id="theme-toggle" type="button" aria-pressed="false">◐ وضع القراءة الليلي</button>
+    </div>
+  </section>
   <section class="page-stage" id="page-stage" tabindex="0" role="region" aria-label="صفحات الكتيّب">
     <div class="page-stack">
       <article class="book-leaf" data-book-page data-page-title="الغلاف الأكاديمي" role="group" aria-roledescription="صفحة" aria-label="الصفحة ١: الغلاف الأكاديمي">
