@@ -6,6 +6,11 @@
 .garden-frond--two{top:32vh;left:-42px;--tilt:70deg;animation-duration:8s;animation-delay:-3s;opacity:.18}
 .garden-frond--three{right:4vw;bottom:-105px;--tilt:164deg;animation-duration:9s;animation-delay:-5s;opacity:.17}
 .garden-frond--four{top:-76px;left:24vw;width:clamp(130px,17vw,220px);--tilt:-21deg;animation-duration:7.5s;animation-delay:-2s;opacity:.15}
+.garden-tree{position:absolute;width:clamp(205px,28vw,345px);height:auto;color:#8fbd9b;opacity:.17;transform-origin:50% 92%;filter:drop-shadow(0 8px 22px rgba(0,0,0,.12));animation:tree-sway 9s ease-in-out infinite alternate}
+.garden-tree svg{display:block;width:100%;height:auto}
+.garden-tree--left{left:-90px;top:25vh;animation-duration:10s}
+.garden-tree--right{right:-95px;top:43vh;width:clamp(230px,30vw,370px);opacity:.15;animation-duration:12s;animation-delay:-5s}
+@keyframes tree-sway{from{transform:rotate(-2.6deg)}to{transform:rotate(2.6deg)}}
 @keyframes garden-sway{
   from{transform:translate3d(-8px,8px,0) rotate(calc(var(--tilt,0deg) - 5deg)) scale(.97)}
   to{transform:translate3d(10px,-9px,0) rotate(calc(var(--tilt,0deg) + 5deg)) scale(1.025)}
@@ -21,13 +26,15 @@ body>header,body>main,body>footer{position:relative;z-index:2}
   .garden-frond{opacity:.16}
   .garden-frond--two{left:-85px}
   .garden-frond--three{right:-75px}
+  .garden-tree--left{left:-118px}
+  .garden-tree--right{right:-128px}
 }
 @media(max-width:500px){
   .garden-sound-toggle{left:12px;bottom:12px;min-height:44px;padding:8px 13px;gap:7px;font-size:11px}
   .garden-sound-toggle svg{width:18px;height:18px;flex-basis:18px}
 }
 @media(prefers-reduced-motion:reduce){
-  .garden-frond{animation:none!important;transform:rotate(var(--tilt,0deg))}
+  .garden-frond,.garden-tree{animation:none!important;transform:rotate(var(--tilt,0deg))}
 }
 @media print{
   .garden-background,.garden-sound-toggle{display:none!important}
