@@ -6,10 +6,10 @@
   <meta name="theme-color" content="#081e1f">
   <meta name="description" content="منصة تفاعلية من كلية الصيدلة بجامعة المنصورة الأهلية لاستكشاف الزنجبيل والنعناع والسيكران ومطالعة دليل المريض والمرجع الأكاديمي.">
   <title>منصة النباتات الطبية | PHYTO MOTION</title>
-  <link rel="stylesheet" href="assets/portal.css?v=2">
+  <link rel="stylesheet" href="assets/portal.css?v=3">
   <link rel="stylesheet" href="assets/garden.css?v=10">
   <script src="assets/garden.js?v=13" defer></script>
-  <script type="module" src="assets/garden-3d.js?v=4"></script>
+  <script type="module" src="assets/garden-3d.js?v=5"></script>
 </head>
 <body>
 <header class="site-header">
@@ -42,30 +42,15 @@
   <section class="hero" id="home" aria-labelledby="hero-title">
     <div class="hero-layout">
       <div class="hero-copy-column">
-        <p class="eyebrow">منصة تعليمية تفاعلية · قسم العقاقير</p>
-        <h1 id="hero-title">استكشف النباتات الطبية<br><em>في السفر والحركة</em></h1>
-        <p class="hero-copy">تعرّف على الزنجبيل والنعناع والسيكران من خلال مجسمات ثلاثية الأبعاد، ثم اختر الدليل المناسب لك.</p>
-        <div class="hero-actions">
-          <a class="hero-primary" href="#booklets">ابدأ التعلّم <span aria-hidden="true">←</span></a>
-          <a class="hero-secondary" href="#plants">استكشف النباتات</a>
-        </div>
-        <div class="hero-highlights" aria-label="محتوى المنصة">
-          <span><b aria-hidden="true">03</b> نباتات</span>
-          <span><b aria-hidden="true">02</b> إصداران كاملان</span>
-          <span>للمريض وللمختص</span>
-        </div>
-        <div class="hero-rule"><span></span><p>كلية الصيدلة · جامعة المنصورة الأهلية</p><span></span></div>
+        <p class="eyebrow">كلية الصيدلة · قسم العقاقير</p>
+        <h1 id="hero-title">النباتات الطبية<br><em>في السفر والحركة</em></h1>
+        <p class="hero-copy">اكتشف الزنجبيل والنعناع والسيكران، واختر دليلك للتعلّم.</p>
+        <div class="hero-actions"><a class="hero-primary" href="#booklets">ابدأ التعلّم <span aria-hidden="true">←</span></a><a class="hero-secondary" href="#booklets">تصفّح الكتيّبات</a></div>
       </div>
-      <div class="hero-visual" id="plants">
-        <div class="hero-visual-heading"><span class="eyebrow">نموذج نباتي ثلاثي الأبعاد</span><span class="hero-live"><i></i> دوّار</span></div>
-        <div class="hero-3d-stage" id="hero-3d-stage" role="img" aria-label="نموذج ثلاثي الأبعاد للنبات المحدد؛ اسحب لتدويره"></div>
-        <div class="hero-plant-caption"><div><span class="plant-caption-label">النبات المحدد</span><h2 id="hero-plant-title">الزنجبيل</h2><p id="hero-plant-latin">Zingiber officinale</p></div><span class="hero-plant-index" id="hero-plant-index">01 / 03</span></div>
-        <div class="hero-plant-picker" role="group" aria-label="اختر نباتًا لاستكشاف نموذجه">
-          <button type="button" class="plant-choice is-active" data-garden-plant="ginger" aria-pressed="true"><span>الزنجبيل</span><small>Zingiber</small></button>
-          <button type="button" class="plant-choice" data-garden-plant="peppermint" aria-pressed="false"><span>النعناع</span><small>Mentha</small></button>
-          <button type="button" class="plant-choice" data-garden-plant="henbane" aria-pressed="false"><span>السيكران</span><small>Hyoscyamus</small></button>
-        </div>
-        <div class="hero-model-controls"><span>اسحب النموذج لتدويره</span><div><button type="button" data-garden-auto aria-pressed="true">إيقاف الدوران</button><button type="button" data-garden-reset>إعادة الضبط</button></div></div>
+      <div class="hero-visual" id="plants" aria-label="نباتات طبية ثلاثية الأبعاد تتحرك في شريط">
+        <div class="hero-visual-heading"><span class="eyebrow">ثلاثة نباتات · نماذج ثلاثية الأبعاد</span><span class="hero-live"><i></i> استكشف</span></div>
+        <div class="hero-3d-stage" id="hero-3d-stage" role="img" aria-label="الزنجبيل والنعناع والسيكران في شريط متحرك"></div>
+        <div class="hero-ticker-labels" aria-hidden="true"><span>الزنجبيل <small>GINGER</small></span><span>النعناع <small>MINT</small></span><span>السيكران <small>HENBANE</small></span></div>
       </div>
     </div>
   </section>

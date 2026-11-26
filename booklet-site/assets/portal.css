@@ -337,3 +337,44 @@ h1,h2,p{margin-top:0}
   .section-heading{align-items:flex-start;flex-direction:column;gap:4px}
   .section-heading>span{font-size:9px}
 }
+
+/* Compact front-page botanical ticker: keep all three models together in view. */
+.hero{padding:25px 0 12px}
+.hero-layout{min-height:0;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(18px,3vw,42px)}
+.hero-copy-column{max-width:none;padding:8px 0}
+.hero h1{margin:10px 0 9px;font-size:clamp(32px,3.6vw,46px);line-height:1.22}
+.hero-copy{font-size:13px;line-height:1.8}
+.hero-actions{gap:9px;margin-top:16px}
+.hero-primary,.hero-secondary{min-height:39px;padding:8px 13px;font-size:11px}
+.hero-visual{padding:0}
+.hero-visual::before{inset:0 4% 4%;filter:blur(12px)}
+.hero-visual-heading{padding:0 7px}
+.hero-visual-heading .eyebrow{font-size:9px}
+.hero-3d-stage{height:188px;cursor:default}
+.hero-3d-stage:active{cursor:default}
+.hero-3d-stage::after{position:absolute;inset:auto 4% 8px;height:1px;background:linear-gradient(90deg,transparent,rgba(216,187,130,.28),transparent);content:"";pointer-events:none}
+.hero-ticker-labels{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:0 7px;border-top:1px solid rgba(215,194,148,.15);padding-top:6px;text-align:center;color:#dfd8c2;font-size:10px;font-weight:700}
+.hero-ticker-labels span{display:flex;align-items:center;justify-content:center;gap:5px;white-space:nowrap}
+.hero-ticker-labels small{color:#91a394;font:8px/1 Georgia,serif;letter-spacing:.07em;direction:ltr}
+.hero-3d-stage .garden-3d-layer.garden-3d-fallback{inset:0 auto 0 0;display:flex;width:200%;align-items:center;animation:plantTicker 20s linear infinite}
+.hero-3d-stage .garden-3d-fallback .garden-fallback-plant{position:static;display:block;flex:0 0 16.6667%;width:16.6667%;height:92%;object-fit:contain;transform:none;animation:none!important}
+@keyframes plantTicker{to{transform:translateX(-50%)}}
+@media(max-width:700px){
+  .hero{padding:19px 0 9px}
+  .hero-layout{grid-template-columns:minmax(0,1fr);gap:9px}
+  .hero-copy-column{padding:0}
+  .hero h1{margin:8px 0 6px;font-size:clamp(29px,7vw,38px)}
+  .hero-copy{font-size:12px}
+  .hero-actions{margin-top:11px}
+  .hero-visual{width:100%;max-width:620px;margin-inline:auto}
+  .hero-3d-stage{height:157px}
+}
+@media(max-width:500px){
+  .hero{padding-top:15px}
+  .hero-3d-stage{height:140px}
+  .hero-ticker-labels{font-size:9px}
+  .hero-ticker-labels small{font-size:7px}
+}
+@media(prefers-reduced-motion:reduce){
+  .hero-3d-stage .garden-3d-layer.garden-3d-fallback{animation:none}
+}

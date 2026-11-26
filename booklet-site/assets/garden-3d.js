@@ -5,11 +5,6 @@ import * as THREE from './vendor/three.module.js';
   var reduced=window.matchMedia('(prefers-reduced-motion: reduce)');
   var heroStage=document.getElementById('hero-3d-stage');
   var isHero=!!heroStage;
-  var plantInfo=[
-    {name:'ginger',arabic:'الزنجبيل',latin:'Zingiber officinale'},
-    {name:'peppermint',arabic:'النعناع',latin:'Mentha × piperita'},
-    {name:'henbane',arabic:'السيكران',latin:'Hyoscyamus niger'}
-  ];
   var layer=document.createElement('div');
   layer.className=isHero?'garden-3d-layer garden-3d-hero-layer':'garden-3d-layer';
   layer.setAttribute('aria-hidden','true');
@@ -17,27 +12,17 @@ import * as THREE from './vendor/three.module.js';
 
   function fallback(){
     layer.classList.add('garden-3d-fallback');
-    [
+    var specimens=[
       ['ginger','assets/garden-ginger-cutout.png'],
       ['peppermint','assets/garden-peppermint-cutout.png'],
       ['henbane','assets/garden-henbane-cutout.png']
-    ].forEach(function(specimen){
+    ];
+    (isHero?specimens.concat(specimens):specimens).forEach(function(specimen){
       var img=document.createElement('img');
-      img.className='garden-fallback-plant garden-fallback-plant--'+specimen[0]+(specimen[0]==='ginger'?' is-active':'');
-      img.dataset.plant=specimen[0];
+      img.className='garden-fallback-plant garden-fallback-plant--'+specimen[0];
       img.src=specimen[1];img.alt='';img.decoding='async';
       layer.appendChild(img);
     });
-    if(isHero){
-      document.querySelectorAll('[data-garden-plant]').forEach(function(button){button.addEventListener('click',function(){
-        var name=button.getAttribute('data-garden-plant'),item=plantInfo.find(function(plant){return plant.name===name;}),index=plantInfo.indexOf(item);
-        if(!item)return;
-        layer.querySelectorAll('.garden-fallback-plant').forEach(function(img){img.classList.toggle('is-active',img.dataset.plant===name);});
-        document.querySelectorAll('[data-garden-plant]').forEach(function(choice){var active=choice===button;choice.classList.toggle('is-active',active);choice.setAttribute('aria-pressed',String(active));});
-        var title=document.getElementById('hero-plant-title'),latin=document.getElementById('hero-plant-latin'),counter=document.getElementById('hero-plant-index');
-        if(title)title.textContent=item.arabic;if(latin)latin.textContent=item.latin;if(counter)counter.textContent=String(index+1).padStart(2,'0')+' / 03';
-      });});
-    }
   }
 
   var renderer;
@@ -234,49 +219,10 @@ import * as THREE from './vendor/three.module.js';
 
   var plants=[gingerPlant(),mintPlant(),henbanePlant()];
   plants.forEach(function(plant,index){
-    plant.userData.name=plantInfo[index].name;plant.userData.dragX=0;
-    mergePlant(plant);scene.add(plant);plant.visible=!isHero||index===0;
+    plant.userData.dragX=0;
+    mergePlant(plant);scene.add(plant);plant.visible=true;
   });
-  var activeIndex=0,autoRotate=true,dragPointer=null,lastPointer={x:0,y:0};
-  var plantButtons=Array.prototype.slice.call(document.querySelectorAll('[data-garden-plant]'));
-  function selectPlant(name){
-    var next=plantInfo.findIndex(function(item){return item.name===name;});
-    if(next<0)return;
-    activeIndex=next;
-    plants.forEach(function(plant,index){plant.visible=!isHero||index===activeIndex;});
-    plantButtons.forEach(function(button){
-      var active=button.getAttribute('data-garden-plant')===name;
-      button.classList.toggle('is-active',active);button.setAttribute('aria-pressed',String(active));
-    });
-    var title=document.getElementById('hero-plant-title'),latin=document.getElementById('hero-plant-latin'),counter=document.getElementById('hero-plant-index');
-    if(title)title.textContent=plantInfo[next].arabic;
-    if(latin)latin.textContent=plantInfo[next].latin;
-    if(counter)counter.textContent=String(next+1).padStart(2,'0')+' / 03';
-    layer.querySelectorAll('.garden-fallback-plant').forEach(function(img){img.classList.toggle('is-active',img.dataset.plant===name);});
-  }
-  plantButtons.forEach(function(button){button.addEventListener('click',function(){selectPlant(button.getAttribute('data-garden-plant'));});});
-  if(isHero){
-    var autoButton=document.querySelector('[data-garden-auto]'),resetButton=document.querySelector('[data-garden-reset]'),canvas=renderer.domElement;
-    if(reduced.matches)autoRotate=false;
-    if(autoButton){
-      autoButton.setAttribute('aria-pressed',String(autoRotate));
-      if(reduced.matches){autoButton.textContent='متوقف لإعداد تقليل الحركة';autoButton.disabled=true;}
-      autoButton.addEventListener('click',function(){
-        if(reduced.matches)return;
-        autoRotate=!autoRotate;autoButton.setAttribute('aria-pressed',String(autoRotate));
-        autoButton.textContent=autoRotate?'إيقاف الدوران':'تشغيل الدوران';
-      });
-    }
-    if(resetButton)resetButton.addEventListener('click',function(){plants[activeIndex].rotation.set(0,0,0);plants[activeIndex].userData.dragX=0;});
-    canvas.addEventListener('pointerdown',function(event){dragPointer=event.pointerId;lastPointer.x=event.clientX;lastPointer.y=event.clientY;try{canvas.setPointerCapture(event.pointerId);}catch(error){}});
-    canvas.addEventListener('pointermove',function(event){
-      if(dragPointer!==event.pointerId)return;
-      var plant=plants[activeIndex],dx=event.clientX-lastPointer.x,dy=event.clientY-lastPointer.y;
-      plant.rotation.y+=dx*.012;plant.userData.dragX=Math.max(-.8,Math.min(.8,plant.userData.dragX+dy*.009));
-      lastPointer.x=event.clientX;lastPointer.y=event.clientY;
-    });
-    ['pointerup','pointercancel','lostpointercapture'].forEach(function(type){canvas.addEventListener(type,function(){dragPointer=null;});});
-  }
+  var autoRotate=!reduced.matches;
   var viewport={width:1,height:1};
   function resize(){
     viewport.width=isHero?Math.max(1,heroStage.clientWidth):Math.max(1,window.innerWidth);
@@ -284,10 +230,13 @@ import * as THREE from './vendor/three.module.js';
     renderer.setSize(viewport.width,viewport.height,false);
     camera.left=-viewport.width/2;camera.right=viewport.width/2;
     camera.top=viewport.height/2;camera.bottom=-viewport.height/2;camera.updateProjectionMatrix();
-    var scale=isHero?Math.min(1.28,Math.max(.82,viewport.height/300)):Math.max(.67,Math.min(1,viewport.height/820));
+    var scale=isHero?Math.min(.9,Math.max(.55,viewport.height/230)):Math.max(.67,Math.min(1,viewport.height/820));
     plants.forEach(function(plant){plant.scale.setScalar(scale);});
     if(isHero){
-      plants.forEach(function(plant){plant.position.set(0,-viewport.height*.29,0);plant.userData.baseX=0;plant.userData.baseY=plant.position.y;});
+      plants.forEach(function(plant,index){
+        plant.position.set(viewport.width*.34-index*(viewport.width/3),-viewport.height*.28,-index*3);
+        plant.userData.baseX=plant.position.x;plant.userData.baseY=plant.position.y;
+      });
     }else{
       plants[0].position.set(-viewport.width*.47,viewport.height*.02,0);
       plants[1].position.set(viewport.width*.47,viewport.height*.12,-8);
@@ -313,7 +262,10 @@ import * as THREE from './vendor/three.module.js';
       if(!isHero||autoRotate)plant.rotation.y+=plant.userData.speed*dt;
       plant.rotation.x=plant.userData.dragX+.07*Math.sin(t*.42+plant.userData.phase);
       plant.rotation.z=.018*Math.sin(t*.55+plant.userData.phase);
-      if(!isHero){
+      if(isHero){
+        plant.position.x-=42*dt;
+        if(plant.position.x < -viewport.width*.5-62)plant.position.x+=viewport.width;
+      }else{
         plant.position.y=plant.userData.baseY+Math.sin(t*.48+plant.userData.phase)*plant.userData.amplitude;
         plant.position.x=plant.userData.baseX+Math.sin(t*.25+plant.userData.phase)*2;
       }
