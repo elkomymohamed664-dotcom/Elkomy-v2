@@ -18,13 +18,13 @@
   button.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4h4l5 4V6l-5 4H4Z"/><path d="M16 9a5 5 0 0 1 0 6m2-9a9 9 0 0 1 0 12"/></svg><span class="garden-sound-label">صوت الحديقة يعمل · كتم</span>';
   body.appendChild(button);
 
-  var ambience=document.createElement('audio');
-  ambience.className='garden-ambience';ambience.src='assets/audio/garden-ambience.mp3';ambience.type='audio/mpeg';
-  ambience.loop=true;ambience.preload='auto';ambience.setAttribute('aria-hidden','true');
-  ambience.setAttribute('playsinline','');ambience.volume=.08;body.appendChild(ambience);
+  var ambience=document.getElementById('garden-ambience');
+  if(!ambience){ambience=document.createElement('audio');body.appendChild(ambience);}
+  ambience.className='garden-ambience';ambience.loop=true;ambience.preload='auto';
+  ambience.setAttribute('aria-hidden','true');ambience.setAttribute('playsinline','');
   var enabled=true,ducked=false,playingAudio=new Set();
 
-  function setVolume(){ambience.volume=enabled?(ducked?.018:.08):0;}
+  function setVolume(){ambience.volume=enabled?(ducked ? .045 : .20):0;}
   function announce(){
     button.setAttribute('aria-pressed',String(enabled));
     button.setAttribute('aria-label',enabled?'كتم صوت الحديقة':'تشغيل صوت الحديقة');

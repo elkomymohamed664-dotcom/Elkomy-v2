@@ -1,15 +1,15 @@
 /* Subtle moving botanical silhouettes; decorative only and kept behind the reading surface. */
 .garden-background{position:fixed;inset:0;z-index:1;overflow:hidden;pointer-events:none;contain:layout paint}
-.garden-frond{position:absolute;width:clamp(180px,25vw,330px);height:auto;color:#a5d2b3;opacity:.22;transform-origin:50% 86%;filter:drop-shadow(0 7px 18px rgba(0,0,0,.12));animation:garden-sway 7s ease-in-out infinite alternate}
+.garden-frond{position:absolute;width:clamp(180px,25vw,330px);height:auto;color:#9bd4aa;opacity:.30;transform-origin:50% 86%;filter:drop-shadow(0 7px 18px rgba(0,0,0,.12));animation:garden-sway 7s ease-in-out infinite alternate}
 .garden-frond path{vector-effect:non-scaling-stroke}
 .garden-frond--one{top:4vh;right:-24px;--tilt:-10deg;animation-duration:7s}
-.garden-frond--two{top:32vh;left:-42px;--tilt:70deg;animation-duration:8s;animation-delay:-3s;opacity:.18}
-.garden-frond--three{right:4vw;bottom:-105px;--tilt:164deg;animation-duration:9s;animation-delay:-5s;opacity:.17}
-.garden-frond--four{top:-76px;left:24vw;width:clamp(130px,17vw,220px);--tilt:-21deg;animation-duration:7.5s;animation-delay:-2s;opacity:.15}
-.garden-tree{position:absolute;width:clamp(205px,28vw,345px);height:auto;color:#8fbd9b;opacity:.17;transform-origin:50% 92%;filter:drop-shadow(0 8px 22px rgba(0,0,0,.12));animation:tree-sway 9s ease-in-out infinite alternate}
+.garden-frond--two{top:32vh;left:-42px;--tilt:70deg;animation-duration:8s;animation-delay:-3s;opacity:.26}
+.garden-frond--three{right:4vw;bottom:-105px;--tilt:164deg;animation-duration:9s;animation-delay:-5s;opacity:.25}
+.garden-frond--four{top:-76px;left:24vw;width:clamp(130px,17vw,220px);--tilt:-21deg;animation-duration:7.5s;animation-delay:-2s;opacity:.22}
+.garden-tree{position:absolute;width:clamp(205px,28vw,345px);height:auto;color:#88c99a;opacity:.28;transform-origin:50% 92%;filter:drop-shadow(0 8px 22px rgba(0,0,0,.12));animation:tree-sway 9s ease-in-out infinite alternate}
 .garden-tree svg{display:block;width:100%;height:auto}
 .garden-tree--left{left:-90px;top:25vh;animation-duration:10s}
-.garden-tree--right{right:-95px;top:43vh;width:clamp(230px,30vw,370px);opacity:.15;animation-duration:12s;animation-delay:-5s}
+.garden-tree--right{right:-95px;top:43vh;width:clamp(230px,30vw,370px);opacity:.24;animation-duration:12s;animation-delay:-5s}
 @keyframes tree-sway{from{transform:rotate(-2.6deg)}to{transform:rotate(2.6deg)}}
 @keyframes garden-sway{
   from{transform:translate3d(-8px,8px,0) rotate(calc(var(--tilt,0deg) - 5deg)) scale(.97)}
@@ -23,7 +23,8 @@
 .garden-sound-toggle:disabled{opacity:.55;cursor:not-allowed}
 body>header,body>main,body>footer{position:relative;z-index:2}
 @media(max-width:760px){
-  .garden-frond{opacity:.16}
+  .garden-frond{opacity:.24}
+  .garden-tree{opacity:.25}
   .garden-frond--two{left:-85px}
   .garden-frond--three{right:-75px}
   .garden-tree--left{left:-118px}
