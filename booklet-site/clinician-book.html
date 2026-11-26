@@ -7,6 +7,9 @@
 <meta name="description" content="Medicinal Plants in Motion — مرجع أكاديمي كامل للطبيب والصيدلي من كلية الصيدلة، جامعة المنصورة الأهلية.">
 <title>المرجع الأكاديمي للطبيب والصيدلي | PHYTO MOTION</title>
 <link rel="stylesheet" href="assets/flipbook.css">
+<link rel="stylesheet" href="assets/garden.css?v=10">
+<script src="assets/garden.js?v=13" defer></script>
+  <script type="module" src="assets/garden-3d.js?v=3"></script>
 </head>
 <body data-book-name="المرجع الأكاديمي للطبيب والصيدلي">
 <header class="reader-wrap reader-header">
@@ -23,7 +26,7 @@
     <span class="reader-brand-copy"><strong>PHYTO MOTION</strong><span>نشاط العلاج بالنباتات الطبية</span></span>
   </a>
   <div class="reader-actions">
-    <button class="sound-toggle" id="sound-toggle" type="button" aria-pressed="true" aria-label="كتم صوت تقليب الصفحات" title="كتم صوت تقليب الصفحات"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4h4l5 4V6l-5 4H4Z"/><path d="M16 9a5 5 0 0 1 0 6m2-9a9 9 0 0 1 0 12"/></svg><span id="sound-label" class="sound-label">الصوت: يعمل</span></button>
+    <button class="sound-toggle" id="sound-toggle" type="button" aria-pressed="true" aria-label="كتم أصوات التقليب والتظليل والتنبيه" title="كتم أصوات التقليب والتظليل والتنبيه"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4h4l5 4V6l-5 4H4Z"/><path d="M16 9a5 5 0 0 1 0 6m2-9a9 9 0 0 1 0 12"/></svg><span id="sound-label" class="sound-label">الصوت: يعمل</span></button>
     <button class="print-button" type="button" onclick="window.print()" aria-label="طباعة الإصدار"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8V3h10v5M6 17H3V8h18v9h-3M7 14h10v7H7v-7Zm10-3h.01"/></svg><span>طباعة</span></button>
     <a class="reader-link" href="index.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6M9 12h12"/></svg><span>الإصدارات</span></a>
   </div>
@@ -34,7 +37,93 @@
     <h1 id="reader-title">Medicinal Plants in Motion — Sickness &amp; Travel Nausea</h1>
     <p>تصفّح صفحات المرجع كاملة. يتوفر النص الكامل لكل صفحة للمراجعة والبحث والنسخ.</p>
   </section>
-  <p class="reader-hint"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.5A2.5 2.5 0 0 1 7.5 3H20v16H7.5A2.5 2.5 0 0 0 5 21V5.5Z"/><path d="M5 18.5A2.5 2.5 0 0 1 7.5 16H20M9 7h7M9 10h7M9 13h4"/></svg><span>تنقّل بين الصفحات باستخدام الأزرار أو مفاتيح الأسهم، ويمكن السحب على الهاتف.</span></p>
+  <div class="reader-hint"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.5A2.5 2.5 0 0 1 7.5 3H20v16H7.5A2.5 2.5 0 0 0 5 21V5.5Z"/><path d="M5 18.5A2.5 2.5 0 0 1 7.5 16H20M9 7h7M9 10h7M9 13h4"/></svg><span class="reader-hint-copy">اضغط على سطر لقراءته وتظليله. الأخضر للمعلومات العامة غير التحذيرية، والبرتقالي للمحاذير ويُسمع تنبيه قبل قراءتها. التلوين إرشادي ولا يغني عن استشارة الصيدلي. اضغط صفوف الجداول لقراءتها واسحب على الهاتف للتقليب.</span><button class="page-read-toggle" id="page-read-toggle" type="button" aria-label="استمع إلى نص الصفحة الحالية" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4h4l5 4V6l-5 4H4Z"/><path d="M16 9a5 5 0 0 1 0 6m2-9a9 9 0 0 1 0 12"/></svg><span id="page-read-label">استمع إلى الصفحة</span></button>
+  </div>
+  <div class="reader-safety-legend" aria-label="دليل ألوان التظليل"><span class="safety-legend-item"><i class="safety-dot safety-dot-safe" aria-hidden="true"></i>معلومة عامة / غير تحذيرية</span><span class="safety-legend-item"><i class="safety-dot safety-dot-caution" aria-hidden="true"></i>تحذير أو يلزم الحذر</span></div>
+  <details class="speech-settings">
+    <summary>تحسين الصوت وسرعة القراءة</summary>
+    <div class="speech-settings-panel">
+      <label class="speech-setting" for="speech-voice-ar"><span>الصوت العربي</span><select id="speech-voice-ar" dir="auto"><option value="auto">أفضل صوت مصري متاح تلقائيًا</option></select></label>
+      <label class="speech-setting" for="speech-voice-en"><span>الصوت الإنجليزي</span><select id="speech-voice-en" dir="auto"><option value="auto">أفضل صوت متاح تلقائيًا</option></select></label>
+      <label class="speech-setting speech-rate-setting" for="speech-rate"><span>سرعة القراءة <output id="speech-rate-value">0.90×</output></span><input id="speech-rate" type="range" min="75" max="110" step="5" value="90"></label>
+      <p class="speech-settings-note" id="speech-settings-note" aria-live="polite">يطلب الوضع التلقائي صوت ar-EG للعربية، ويفضّل الصوت المثبّت على الجهاز. جودة النطق وتوافره يعتمدان على الهاتف والمتصفح.</p>
+    </div>
+  </details>
+  <p class="visually-hidden" id="page-highlight-status" aria-live="polite" aria-atomic="true"></p>
+  <section class="reader-discovery" aria-label="أدوات استكشاف الكتيّب">
+    <div class="reader-tool-row">
+      <form class="book-search" id="book-search" role="search">
+        <label class="search-label" for="book-search-input">ابحث داخل صفحات الكتيّب</label>
+        <div class="search-control">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></svg>
+          <input id="book-search-input" type="search" placeholder="مثل: الزنجبيل أو Menthol" autocomplete="off" spellcheck="false" dir="auto">
+          <button class="search-clear" id="search-clear" type="button" aria-label="مسح البحث" title="مسح البحث" hidden>×</button>
+          <button class="search-submit" type="submit">بحث</button>
+        </div>
+        <p class="search-feedback" id="search-feedback" aria-live="polite">ابحث في نصوص الصفحات الكاملة، بالعربية أو الإنجليزية.</p>
+      </form>
+      <details class="page-index" id="page-index">
+        <summary>
+          <svg class="page-index-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1"/><rect x="13.5" y="3.5" width="7" height="7" rx="1"/><rect x="3.5" y="13.5" width="7" height="7" rx="1"/><rect x="13.5" y="13.5" width="7" height="7" rx="1"/></svg>
+          <span class="page-index-copy"><strong>فهرس الصفحات</strong><small>انتقل مباشرةً إلى أي صفحة</small></span>
+          <span class="page-index-count" id="page-index-count">فهرس مصغّر</span>
+          <svg class="disclosure-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg>
+        </summary>
+        <ol class="page-thumbnails" id="page-thumbnails" aria-label="اختيار صفحة من الكتيّب"></ol>
+      </details>
+    </div>
+    <div class="search-results-shell" id="search-results-shell" hidden>
+      <p class="search-results-heading" id="search-results-heading">نتائج البحث داخل الصفحات</p>
+      <ol class="search-results" id="search-results"></ol>
+    </div>
+    <details class="plant-explorer" id="plant-explorer">
+      <summary>
+        <svg class="plant-explorer-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21V9M12 13C5 13 4 6 4 6c6-.5 9 3 8 7Zm0-2c6 0 8-6 8-6-6-.5-9 3-8 6Z"/><path d="M5 21h14"/></svg>
+        <span class="plant-explorer-copy"><strong>استكشف النباتات المذكورة</strong><small>بطاقات علمية مختصرة مع تنبيهات السلامة</small></span>
+        <span class="plant-count">٣ نباتات</span>
+        <svg class="disclosure-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg>
+      </summary>
+      <div class="plant-grid">
+        <details class="plant-card">
+          <summary class="plant-card-summary">
+            <img class="plant-art" src="assets/plants/ginger.jpg" alt="" width="72" height="72" loading="lazy" decoding="async">
+            <span class="plant-card-heading"><strong>الزنجبيل</strong><em>Zingiber officinale</em><span class="plant-used-part">الجذمور · Rhizome</span></span>
+            <span class="plant-card-toggle" aria-hidden="true">+</span>
+          </summary>
+          <div class="plant-card-content">
+            <dl class="plant-facts"><div><dt>الفصيلة</dt><dd>الزنجبيلية</dd></div><div><dt>مركبات بارزة</dt><dd>جينجيرولات · شوجولات</dd></div></dl>
+            <p>يركّز الدليل على دوره في تهدئة المعدة والغثيان المصاحب للحركة. وينبّه إلى الحذر مع مميّعات الدم، وحصوات المرارة، وقبل الجراحة.</p>
+            <button class="plant-page-link" type="button" data-jump-page="2"><span>افتح صفحة الزنجبيل في الكتيّب</span><b aria-hidden="true">←</b></button>
+          </div>
+        </details>
+        <details class="plant-card">
+          <summary class="plant-card-summary">
+            <img class="plant-art" src="assets/plants/peppermint.jpg" alt="" width="72" height="72" loading="lazy" decoding="async">
+            <span class="plant-card-heading"><strong>النعناع الفلفلي</strong><em>Mentha × piperita</em><span class="plant-used-part">الأوراق والزيت العطري</span></span>
+            <span class="plant-card-toggle" aria-hidden="true">+</span>
+          </summary>
+          <div class="plant-card-content">
+            <dl class="plant-facts"><div><dt>الفصيلة</dt><dd>الشفوية</dd></div><div><dt>مركبات بارزة</dt><dd>مينثول · مينثون</dd></div></dl>
+            <p>يعرض الدليل الاستنشاق لتخفيف غثيان السفر. تنبيه مهم: يُحفظ زيت النعناع بعيدًا عن وجه الرضّع، ويُستخدم بحذر مع ارتجاع المريء.</p>
+            <button class="plant-page-link" type="button" data-jump-page="3"><span>افتح صفحة النعناع في الكتيّب</span><b aria-hidden="true">←</b></button>
+          </div>
+        </details>
+        <details class="plant-card plant-card-caution">
+          <summary class="plant-card-summary">
+            <img class="plant-art" src="assets/plants/henbane.jpg" alt="" width="72" height="72" loading="lazy" decoding="async">
+            <span class="plant-card-heading"><strong>السيكران الأسود</strong><em>Hyoscyamus niger</em><span class="plant-used-part">نبات سام · مستحضر مقنّن فقط</span></span>
+            <span class="plant-card-toggle" aria-hidden="true">+</span>
+          </summary>
+          <div class="plant-card-content">
+            <dl class="plant-facts"><div><dt>الفصيلة</dt><dd>الباذنجانية</dd></div><div><dt>قلويدات بارزة</dt><dd>هيوسيامين · سكوبولامين</dd></div></dl>
+            <p><strong>تحذير مرتفع:</strong> النبات الخام سام؛ لا يُقطف ولا يُغلى ولا يُستخدم كعشبة منزلية. يتناول الدليل مستحضرات دوائية مقنّنة فقط وتحت إشراف مختص.</p>
+            <button class="plant-page-link" type="button" data-jump-page="4"><span>افتح صفحة السيكران في الكتيّب</span><b aria-hidden="true">←</b></button>
+          </div>
+        </details>
+      </div>
+      <p class="plant-disclaimer">ملخص توعوي من صفحات هذا الإصدار، وليس توصية علاجية أو بديلًا عن النشرة الدوائية واستشارة الطبيب أو الصيدلي.</p>
+    </details>
+  </section>
   <section class="page-stage" id="page-stage" tabindex="0" role="region" aria-label="صفحات الكتيّب">
     <div class="page-stack">
       <article class="book-leaf" data-book-page data-page-title="الغلاف الأكاديمي" role="group" aria-roledescription="صفحة" aria-label="الصفحة ١: الغلاف الأكاديمي">
