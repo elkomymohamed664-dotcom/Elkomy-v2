@@ -19,7 +19,7 @@
   body.appendChild(button);
 
   var ambience=document.createElement('audio');
-  ambience.className='garden-ambience';ambience.src='assets/audio/garden-ambience.wav';
+  ambience.className='garden-ambience';ambience.src='assets/audio/garden-ambience.mp3';ambience.type='audio/mpeg';
   ambience.loop=true;ambience.preload='auto';ambience.setAttribute('aria-hidden','true');
   ambience.setAttribute('playsinline','');ambience.volume=.08;body.appendChild(ambience);
   var enabled=true,ducked=false,playingAudio=new Set();
