@@ -4,12 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#081e1f">
-  <meta name="description" content="إصدارات التوعية النباتية من كلية الصيدلة بجامعة المنصورة الأهلية: دليل المريض ومرجع أكاديمي كامل.">
-  <title>الإصدارات العلمية | كلية الصيدلة - جامعة المنصورة الأهلية</title>
-  <link rel="stylesheet" href="assets/portal.css">
+  <meta name="description" content="منصة تفاعلية من كلية الصيدلة بجامعة المنصورة الأهلية لاستكشاف الزنجبيل والنعناع والسيكران ومطالعة دليل المريض والمرجع الأكاديمي.">
+  <title>منصة النباتات الطبية | PHYTO MOTION</title>
+  <link rel="stylesheet" href="assets/portal.css?v=2">
   <link rel="stylesheet" href="assets/garden.css?v=10">
   <script src="assets/garden.js?v=13" defer></script>
-  <script type="module" src="assets/garden-3d.js?v=3"></script>
+  <script type="module" src="assets/garden-3d.js?v=4"></script>
 </head>
 <body>
 <header class="site-header">
@@ -29,14 +29,45 @@
       <svg class="program-mark" viewBox="0 0 43 50" aria-hidden="true"><path d="M21.5 46V18M21.5 34C6 35 5 19 5 19c13-1 18 7 16.5 15ZM21.5 26C37 27 38 10 38 10c-13-1-18 8-16.5 16ZM21.5 18C11 16 14 3 14 3c10 2 11 9 7.5 15Z"/><path d="m10 24 11.5 10M33 15 21.5 26M8 45h27"/></svg>
       <span><strong>PHYTO MOTION</strong><small>نشاط العلاج بالنباتات الطبية</small></span>
     </a>
+    <nav class="site-nav" aria-label="التنقل الرئيسي">
+      <a href="#home">الرئيسية</a>
+      <a href="#plants">استكشف النباتات</a>
+      <a href="#booklets">الكتيّبات</a>
+      <a href="#team">فريق العمل</a>
+      <a href="#contact">تواصل</a>
+    </nav>
   </div>
 </header>
 <main class="wrap">
-  <section class="hero" aria-labelledby="hero-title">
-    <p class="eyebrow">إصدارات علمية وتوعوية</p>
-    <h1 id="hero-title">أمان النباتات الطبية<br><em>في السفر والحركة</em></h1>
-    <p class="hero-copy">إصداران متكاملان من نشاط العلاج بالنباتات الطبية: دليل إرشادي للمريض والزائر، ومرجع أكاديمي للطبيب والصيدلي.</p>
-    <div class="hero-rule"><span></span><p>كلية الصيدلة · جامعة المنصورة الأهلية</p><span></span></div>
+  <section class="hero" id="home" aria-labelledby="hero-title">
+    <div class="hero-layout">
+      <div class="hero-copy-column">
+        <p class="eyebrow">منصة تعليمية تفاعلية · قسم العقاقير</p>
+        <h1 id="hero-title">استكشف النباتات الطبية<br><em>في السفر والحركة</em></h1>
+        <p class="hero-copy">تعرّف على الزنجبيل والنعناع والسيكران من خلال مجسمات ثلاثية الأبعاد، ثم اختر الدليل المناسب لك.</p>
+        <div class="hero-actions">
+          <a class="hero-primary" href="#booklets">ابدأ التعلّم <span aria-hidden="true">←</span></a>
+          <a class="hero-secondary" href="#plants">استكشف النباتات</a>
+        </div>
+        <div class="hero-highlights" aria-label="محتوى المنصة">
+          <span><b aria-hidden="true">03</b> نباتات</span>
+          <span><b aria-hidden="true">02</b> إصداران كاملان</span>
+          <span>للمريض وللمختص</span>
+        </div>
+        <div class="hero-rule"><span></span><p>كلية الصيدلة · جامعة المنصورة الأهلية</p><span></span></div>
+      </div>
+      <div class="hero-visual" id="plants">
+        <div class="hero-visual-heading"><span class="eyebrow">نموذج نباتي ثلاثي الأبعاد</span><span class="hero-live"><i></i> دوّار</span></div>
+        <div class="hero-3d-stage" id="hero-3d-stage" role="img" aria-label="نموذج ثلاثي الأبعاد للنبات المحدد؛ اسحب لتدويره"></div>
+        <div class="hero-plant-caption"><div><span class="plant-caption-label">النبات المحدد</span><h2 id="hero-plant-title">الزنجبيل</h2><p id="hero-plant-latin">Zingiber officinale</p></div><span class="hero-plant-index" id="hero-plant-index">01 / 03</span></div>
+        <div class="hero-plant-picker" role="group" aria-label="اختر نباتًا لاستكشاف نموذجه">
+          <button type="button" class="plant-choice is-active" data-garden-plant="ginger" aria-pressed="true"><span>الزنجبيل</span><small>Zingiber</small></button>
+          <button type="button" class="plant-choice" data-garden-plant="peppermint" aria-pressed="false"><span>النعناع</span><small>Mentha</small></button>
+          <button type="button" class="plant-choice" data-garden-plant="henbane" aria-pressed="false"><span>السيكران</span><small>Hyoscyamus</small></button>
+        </div>
+        <div class="hero-model-controls"><span>اسحب النموذج لتدويره</span><div><button type="button" data-garden-auto aria-pressed="true">إيقاف الدوران</button><button type="button" data-garden-reset>إعادة الضبط</button></div></div>
+      </div>
+    </div>
   </section>
 
   <section class="welcome-audio" aria-labelledby="welcome-audio-title">
@@ -49,7 +80,9 @@
     <p class="welcome-audio-status" id="welcome-audio-status" role="status" aria-live="polite">قد يمنع المتصفح التشغيل التلقائي للصوت؛ إذا لم تسمع الإرشاد، اضغط «استمع إلى الإرشاد».</p>
   </section>
 
-  <section class="book-grid" aria-label="اختيار الإصدار">
+  <section class="booklets-section" id="booklets" aria-labelledby="booklets-title">
+    <div class="section-heading"><div><p class="eyebrow">مساران للتعلّم</p><h2 id="booklets-title">اختر الإصدار المناسب لك</h2></div><span>ابدأ من الأساسيات أو انتقل إلى المرجع الأكاديمي.</span></div>
+  <div class="book-grid">
     <a class="book-card patient" href="patient-book.html" aria-label="قراءة دليل المريض والزائر، ٨ صفحات كاملة">
       <span class="cover-frame"><img src="assets/patient-pages/page-01.jpg" alt="غلاف دليل الاستخدام الآمن للأعشاب في دوار السفر والحركة" width="1192" height="1686" fetchpriority="high"></span>
       <span class="book-copy">
@@ -71,9 +104,10 @@
         <span class="book-open">قراءة المرجع <b aria-hidden="true">←</b></span>
       </span>
     </a>
+  </div>
   </section>
 
-  <section class="contributors" aria-labelledby="contributors-title">
+  <section class="contributors" id="team" aria-labelledby="contributors-title">
     <div class="contributors-heading">
       <div>
         <p class="eyebrow">فريق العمل والإشراف</p>
@@ -118,7 +152,7 @@
     </div>
   </section>
 
-  <section class="contact-section" aria-labelledby="contact-title">
+  <section class="contact-section" id="contact" aria-labelledby="contact-title">
     <div class="contact-copy">
       <p class="eyebrow">تواصل معنا</p>
       <h2 id="contact-title">يسعدنا استقبال استفسارك</h2>
