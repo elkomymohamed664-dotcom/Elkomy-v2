@@ -18,60 +18,88 @@
   button.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4h4l5 4V6l-5 4H4Z"/><path d="M16 9a5 5 0 0 1 0 6m2-9a9 9 0 0 1 0 12"/></svg><span class="garden-sound-label">صوت الحديقة يعمل · كتم</span>';
   body.appendChild(button);
 
-  var ambience=document.getElementById('garden-ambience');
-  if(!ambience){ambience=document.createElement('audio');body.appendChild(ambience);}
-  ambience.className='garden-ambience';ambience.loop=true;ambience.preload='auto';
-  ambience.setAttribute('aria-hidden','true');ambience.setAttribute('playsinline','');
-  var enabled=true,ducked=false,playingAudio=new Set();
-
-  function setVolume(){ambience.volume=enabled?(ducked ? .045 : .20):0;}
+  /* Generate the garden ambience in Web Audio, as on the main site: no media URL. */
+  var enabled=true,ducked=false,ctx=null,master=null,chimeTimer=0,playingAudio=new Set();
+  var AC=window.AudioContext||window.webkitAudioContext;
   function announce(){
     button.setAttribute('aria-pressed',String(enabled));
     button.setAttribute('aria-label',enabled?'كتم صوت الحديقة':'تشغيل صوت الحديقة');
     button.title=enabled?'صوت حديقة هادئ — كتم':'تشغيل صوت الحديقة';
     var label=button.querySelector('.garden-sound-label');
-    if(label)label.textContent=enabled?(ambience.paused?'الصوت جاهز · اضغط للتشغيل':'صوت الحديقة يعمل · كتم'):'تشغيل صوت الحديقة';
+    if(label)label.textContent=enabled?(ctx&&ctx.state==='running'?'صوت الحديقة يعمل · كتم':'صوت الحديقة · اضغط للتشغيل'):'تشغيل صوت الحديقة';
   }
-  function startAmbience(){
-    if(!enabled)return Promise.resolve();
-    setVolume();
-    var result;
-    try{result=ambience.play();}catch(error){announce();return Promise.resolve();}
-    if(result&&typeof result.then==='function')return result.then(announce).catch(announce);
-    announce();return Promise.resolve();
+  function makeNoise(seconds){
+    var length=Math.floor(ctx.sampleRate*seconds),buffer=ctx.createBuffer(1,length,ctx.sampleRate),data=buffer.getChannelData(0),last=0;
+    for(var i=0;i<length;i++){var white=Math.random()*2-1;last=(last+.02*white)/1.02;data[i]=last*3.4;}
+    return buffer;
   }
-  function setDucked(value){ducked=!!value;setVolume();}
-
+  function bell(freq,delay,peak){
+    if(!ctx||!master||!enabled||ctx.state!=='running')return;
+    var at=ctx.currentTime+(delay||0);
+    [[1,1],[2.76,.3],[5.4,.1]].forEach(function(part){
+      var osc=ctx.createOscillator(),gain=ctx.createGain(),filter=ctx.createBiquadFilter();
+      osc.type='sine';osc.frequency.setValueAtTime(freq*part[0],at);osc.detune.value=Math.random()*7-3.5;
+      filter.type='lowpass';filter.frequency.setValueAtTime(freq*part[0]*3.4,at);
+      gain.gain.setValueAtTime(.0001,at);gain.gain.exponentialRampToValueAtTime(Math.max(.0002,(peak||.022)*part[1]),at+.025);
+      gain.gain.exponentialRampToValueAtTime(.0001,at+(part[0]>1?.9:2.2));
+      osc.connect(filter);filter.connect(gain);gain.connect(master);osc.start(at);osc.stop(at+2.4);
+    });
+  }
+  function scheduleChime(){
+    clearTimeout(chimeTimer);chimeTimer=window.setTimeout(function(){
+      if(!document.hidden&&enabled&&ctx&&ctx.state==='running'){
+        var scale=[523.25,587.33,659.25,783.99,880,1046.5];
+        bell(scale[Math.floor(Math.random()*scale.length)],0,.018);
+        if(Math.random()<.42)bell(scale[Math.floor(Math.random()*scale.length)]*1.5,.55+Math.random()*.6,.008);
+      }
+      scheduleChime();
+    },7500+Math.random()*9500);
+  }
+  function initialize(){
+    if(!AC)return false;
+    if(!ctx){
+      try{ctx=new AC();}catch(error){return false;}
+      master=ctx.createGain();master.gain.value=0;master.connect(ctx.destination);
+      var noise=makeNoise(5);
+      [[390,.018,.05,115,.008],[1280,.008,.035,360,.004]].forEach(function(cfg){
+        var src=ctx.createBufferSource(),filter=ctx.createBiquadFilter(),gain=ctx.createGain();
+        src.buffer=noise;src.loop=true;filter.type='bandpass';filter.frequency.value=cfg[0];filter.Q.value=.55;
+        gain.gain.value=.0001;src.connect(filter);filter.connect(gain);gain.connect(master);
+        var drift=ctx.createOscillator(),driftGain=ctx.createGain();drift.type='sine';drift.frequency.value=cfg[2];driftGain.gain.value=cfg[3];drift.connect(driftGain);driftGain.connect(filter.frequency);
+        var swell=ctx.createOscillator(),swellGain=ctx.createGain();swell.type='sine';swell.frequency.value=cfg[2]*.42;swellGain.gain.value=cfg[4];swell.connect(swellGain);swellGain.connect(gain.gain);
+        src.start();drift.start();swell.start();gain.gain.linearRampToValueAtTime(cfg[1],ctx.currentTime+6);
+      });
+      scheduleChime();
+    }
+    return true;
+  }
+  function updateLevel(){
+    if(!master||!ctx)return;
+    var speaking=ducked||(window.speechSynthesis&&(window.speechSynthesis.speaking||window.speechSynthesis.pending));
+    master.gain.setTargetAtTime(enabled?(speaking ? .035 : .15):0,ctx.currentTime,.35);
+  }
+  function start(){
+    if(!enabled||!initialize()){announce();return;}
+    if(ctx.state==='suspended'&&ctx.resume)ctx.resume().then(function(){updateLevel();announce();}).catch(announce);
+    else{updateLevel();announce();}
+  }
+  function setDucked(value){ducked=!!value;updateLevel();}
   button.addEventListener('click',function(){
-    if(enabled&&!ambience.paused){enabled=false;ambience.pause();setVolume();announce();}
-    else{enabled=true;setVolume();startAmbience();}
+    enabled=!enabled;
+    if(enabled)start();else{updateLevel();announce();}
   });
-  function resumeAfterGesture(event){
-    if(!enabled||event.target===button||!ambience.paused)return;
-    startAmbience();
-  }
+  function resumeAfterGesture(event){if(!enabled||event.target===button)return;start();}
   document.addEventListener('pointerdown',resumeAfterGesture,{passive:true});
   document.addEventListener('keydown',resumeAfterGesture);
-  document.addEventListener('play',function(event){
-    var audio=event.target;
-    if(!audio||audio.tagName!=='AUDIO'||audio===ambience)return;
-    playingAudio.add(audio);setDucked(true);
-  },true);
-  function audioStopped(event){
-    var audio=event.target;
-    if(audio&&audio.tagName==='AUDIO'&&audio!==ambience){playingAudio.delete(audio);setDucked(playingAudio.size>0);}
-  }
-  document.addEventListener('pause',audioStopped,true);
-  document.addEventListener('ended',audioStopped,true);
-  ambience.addEventListener('play',announce);
-  ambience.addEventListener('pause',announce);
-  ambience.addEventListener('error',function(){var label=button.querySelector('.garden-sound-label');if(label)label.textContent='تعذّر تحميل صوت الحديقة';});
+  document.addEventListener('play',function(event){var a=event.target;if(a&&a.tagName==='AUDIO'){playingAudio.add(a);setDucked(true);}},true);
+  function audioStopped(event){var a=event.target;if(a&&a.tagName==='AUDIO'){playingAudio.delete(a);setDucked(playingAudio.size>0);}}
+  document.addEventListener('pause',audioStopped,true);document.addEventListener('ended',audioStopped,true);
   document.addEventListener('visibilitychange',function(){
-    if(document.hidden){ambience.pause();return;}
-    if(enabled)startAmbience();
+    if(!ctx)return;
+    if(document.hidden&&ctx.suspend)ctx.suspend().catch(function(){});
+    else if(enabled)start();
   });
-  if(window.speechSynthesis){window.setInterval(function(){if(enabled)setDucked(playingAudio.size>0||window.speechSynthesis.speaking||window.speechSynthesis.pending);},900);}
-  window.addEventListener('pagehide',function(event){if(!event.persisted)ambience.pause();});
-  announce();
-  startAmbience();
+  if(window.speechSynthesis)window.setInterval(updateLevel,800);
+  window.addEventListener('pagehide',function(event){if(!event.persisted&&ctx&&ctx.suspend)ctx.suspend();});
+  announce();start();
 })();
