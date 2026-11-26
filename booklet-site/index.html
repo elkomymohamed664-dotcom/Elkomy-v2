@@ -36,6 +36,16 @@
     <div class="hero-rule"><span></span><p>كلية الصيدلة · جامعة المنصورة الأهلية</p><span></span></div>
   </section>
 
+  <section class="welcome-audio" aria-labelledby="welcome-audio-title">
+    <div class="welcome-audio-copy">
+      <span class="welcome-audio-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 10v4h4l5 4V6l-5 4H4Z"/><path d="M16 9a5 5 0 0 1 0 6m2-9a9 9 0 0 1 0 12"/></svg></span>
+      <div><h2 id="welcome-audio-title">إرشاد صوتي لاختيار الإصدار</h2><p>الكتيّب الأول للمريض والزائر، والمرجع الثاني للطبيب أو الصيدلي.</p></div>
+    </div>
+    <button class="welcome-audio-button" id="welcome-audio-button" type="button" aria-pressed="false"><span id="welcome-audio-button-label">استمع إلى الإرشاد</span></button>
+    <audio id="welcome-audio" src="assets/audio/patient-welcome-ar-eg.mp3" preload="auto" aria-hidden="true"></audio>
+    <p class="welcome-audio-status" id="welcome-audio-status" role="status" aria-live="polite">قد يمنع المتصفح التشغيل التلقائي للصوت؛ إذا لم تسمع الإرشاد، اضغط «استمع إلى الإرشاد».</p>
+  </section>
+
   <section class="book-grid" aria-label="اختيار الإصدار">
     <a class="book-card patient" href="patient-book.html" aria-label="قراءة دليل المريض والزائر، ٨ صفحات كاملة">
       <span class="cover-frame"><img src="assets/patient-pages/page-01.jpg" alt="غلاف دليل الاستخدام الآمن للأعشاب في دوار السفر والحركة" width="1192" height="1686" fetchpriority="high"></span>
@@ -60,11 +70,79 @@
     </a>
   </section>
 
+  <section class="contributors" aria-labelledby="contributors-title">
+    <div class="contributors-heading">
+      <div>
+        <p class="eyebrow">فريق العمل والإشراف</p>
+        <h2 id="contributors-title">الأسماء وراء هذا العمل</h2>
+        <p>إصدارات علمية وتوعوية أُعدّت بجهد فريق النشاط وتحت إشراف أكاديمي.</p>
+      </div>
+      <span class="contributors-ornament" aria-hidden="true"><svg viewBox="0 0 48 48"><path d="M24 5v38M5 24h38M10.6 10.6l26.8 26.8m0-26.8L10.6 37.4"/><circle cx="24" cy="24" r="8"/></svg></span>
+    </div>
+
+    <div class="contributors-panel">
+      <section class="contributors-group" aria-labelledby="supervisors-title">
+        <div class="contributors-group-heading">
+          <span class="group-step" aria-hidden="true">١</span>
+          <div><h3 id="supervisors-title">تحت الإشراف الأكاديمي</h3><p>خبرة علمية تدعم دقة المحتوى وسلامته.</p></div>
+        </div>
+        <ul class="supervisor-grid">
+          <li class="supervisor-card"><span class="supervisor-mark" aria-hidden="true">أ.م.د</span><span class="supervisor-copy"><span class="person-role">أستاذ مساعد</span><strong>أحمد السيد بدير البرماوي</strong></span></li>
+          <li class="supervisor-card"><span class="supervisor-mark" aria-hidden="true">د.</span><span class="supervisor-copy"><span class="person-role">مدرس</span><strong>عبد الله محمد هيكل</strong></span></li>
+          <li class="supervisor-card"><span class="supervisor-mark" aria-hidden="true">ص.</span><span class="supervisor-copy"><span class="person-role">صيدلانية</span><strong>منة القناوي</strong></span></li>
+        </ul>
+      </section>
+
+      <section class="contributors-group team-group" aria-labelledby="team-title">
+        <div class="contributors-group-heading">
+          <span class="group-step" aria-hidden="true">٢</span>
+          <div><h3 id="team-title">إعداد فريق العمل</h3><p>فريق نشاط العلاج بالنباتات الطبية.</p></div>
+          <span class="team-count"><strong>١٠</strong><span>أعضاء</span></span>
+        </div>
+        <ul class="team-grid">
+          <li class="team-member"><span class="team-index" aria-hidden="true">٠١</span><span>محمد محمد خالد الكومي</span></li>
+          <li class="team-member"><span class="team-index" aria-hidden="true">٠٢</span><span>محمد عادل القللي</span></li>
+          <li class="team-member"><span class="team-index" aria-hidden="true">٠٣</span><span>محمد مصطفى المسيري</span></li>
+          <li class="team-member"><span class="team-index" aria-hidden="true">٠٤</span><span>محمد أشرف القصبي</span></li>
+          <li class="team-member"><span class="team-index" aria-hidden="true">٠٥</span><span>محمد شاهين شاهين</span></li>
+          <li class="team-member"><span class="team-index" aria-hidden="true">٠٦</span><span>محمد سامح بليح</span></li>
+          <li class="team-member"><span class="team-index" aria-hidden="true">٠٧</span><span>محمد محمود زيادة</span></li>
+          <li class="team-member"><span class="team-index" aria-hidden="true">٠٨</span><span>نور أيمن محمد محمد</span></li>
+          <li class="team-member"><span class="team-index" aria-hidden="true">٠٩</span><span>ندى عبد الوهاب محمود</span></li>
+          <li class="team-member"><span class="team-index" aria-hidden="true">١٠</span><span>نورسين محمود محمد</span></li>
+        </ul>
+      </section>
+    </div>
+  </section>
+
+  <section class="contact-section" aria-labelledby="contact-title">
+    <div class="contact-copy">
+      <p class="eyebrow">تواصل معنا</p>
+      <h2 id="contact-title">يسعدنا استقبال استفسارك</h2>
+      <p>أرسل سؤالك أو ملاحظتك إلى فريق النشاط، وسنستخدم بياناتك للرد على رسالتك فقط.</p>
+      <div class="contact-note"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 6.5h17v11h-17z"/><path d="m4 7 8 6 8-6"/></svg><span>من فضلك لا ترسل معلومات صحية شخصية أو بيانات شديدة الخصوصية عبر النموذج.</span></div>
+    </div>
+    <form class="contact-form" id="contact-form" action="/api/contact" method="post">
+      <div class="contact-fields">
+        <label class="contact-field" for="contact-name"><span>الاسم</span><input id="contact-name" name="name" type="text" autocomplete="name" maxlength="80" required></label>
+        <label class="contact-field" for="contact-email"><span>البريد الإلكتروني</span><input id="contact-email" name="email" type="email" inputmode="email" autocomplete="email" maxlength="254" required></label>
+      </div>
+      <label class="contact-field contact-message-field" for="contact-message"><span>رسالتك</span><textarea id="contact-message" name="message" rows="4" maxlength="3000" required></textarea></label>
+      <div class="contact-honeypot" aria-hidden="true"><label for="contact-website">اترك هذا الحقل فارغًا</label><input id="contact-website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
+      <div class="contact-actions">
+        <button class="contact-submit" type="submit"><span>إرسال الرسالة</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 5l7 7-7 7"/></svg></button>
+        <p class="contact-status" id="contact-status" role="status" aria-live="polite" aria-atomic="true"></p>
+      </div>
+      <noscript><p class="contact-noscript">فعّل JavaScript لإرسال الرسالة من هذا النموذج.</p></noscript>
+    </form>
+  </section>
+
   <aside class="editorial-note"><span class="note-mark" aria-hidden="true">i</span><p><strong>تنويه علمي:</strong> المحتوى للتثقيف والتوعية، ولا يُعد تشخيصًا أو توصية علاجية. يُرجى الرجوع إلى النشرات المعتمدة واستشارة الطبيب أو الصيدلي عند الحاجة.</p></aside>
 </main>
 <footer class="wrap site-footer">
   <span>جامعة المنصورة الأهلية · كلية الصيدلة · قسم العقاقير</span>
   <a href="index.html">العودة إلى بوابة الإصدارات</a>
 </footer>
+<script src="assets/portal.js" defer></script>
 </body>
 </html>
