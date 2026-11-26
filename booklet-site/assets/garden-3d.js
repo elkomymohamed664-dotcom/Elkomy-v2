@@ -224,9 +224,9 @@ import * as THREE from './vendor/three.module.js';
     camera.top=viewport.height/2;camera.bottom=-viewport.height/2;camera.updateProjectionMatrix();
     var scale=Math.max(.67,Math.min(1,viewport.height/820));
     plants.forEach(function(plant){plant.scale.setScalar(scale);});
-    plants[0].position.set(-viewport.width*.385,-viewport.height*.23,0);
-    plants[1].position.set(viewport.width*.385,-viewport.height*.21,-8);
-    plants[2].position.set(viewport.width*.22,-viewport.height*.405,-14);
+    plants[0].position.set(-viewport.width*.47,viewport.height*.02,0);
+    plants[1].position.set(viewport.width*.47,viewport.height*.12,-8);
+    plants[2].position.set(-viewport.width*.46,-viewport.height*.14,-14);
     plants.forEach(function(plant){plant.userData.baseX=plant.position.x;plant.userData.baseY=plant.position.y;});
   }
   window.addEventListener('resize',resize,{passive:true});resize();
