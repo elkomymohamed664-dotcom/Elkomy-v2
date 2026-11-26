@@ -14,14 +14,14 @@
   botanicalLayer.className='garden-specimens';
   botanicalLayer.setAttribute('aria-hidden','true');
   [
-    {name:'ginger',src:'assets/plants/ginger.jpg'},
-    {name:'peppermint',src:'assets/plants/peppermint.jpg'},
-    {name:'henbane',src:'assets/plants/henbane.jpg'}
+    {name:'ginger',src:'assets/garden-ginger-cutout.png',width:664,height:946},
+    {name:'peppermint',src:'assets/garden-peppermint-cutout.png',width:806,height:941},
+    {name:'henbane',src:'assets/garden-henbane-cutout.png',width:840,height:992}
   ].forEach(function(plant){
     var figure=document.createElement('div');
     figure.className='garden-specimen garden-specimen--'+plant.name;
     var img=document.createElement('img');
-    img.src=plant.src;img.alt='';img.width=360;img.height=360;img.loading='lazy';img.decoding='async';
+    img.src=plant.src;img.alt='';img.width=plant.width;img.height=plant.height;img.decoding='async';
     figure.appendChild(img);botanicalLayer.appendChild(figure);
   });
   layer.appendChild(botanicalLayer);
