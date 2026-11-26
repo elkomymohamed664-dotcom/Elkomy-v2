@@ -6,10 +6,9 @@
   <meta name="theme-color" content="#081e1f">
   <meta name="description" content="منصة تفاعلية من كلية الصيدلة بجامعة المنصورة الأهلية لاستكشاف الزنجبيل والنعناع والسيكران ومطالعة دليل المريض والمرجع الأكاديمي.">
   <title>منصة النباتات الطبية | PHYTO MOTION</title>
-  <link rel="stylesheet" href="assets/portal.css?v=3">
+  <link rel="stylesheet" href="assets/portal.css?v=4">
   <link rel="stylesheet" href="assets/garden.css?v=10">
   <script src="assets/garden.js?v=13" defer></script>
-  <script type="module" src="assets/garden-3d.js?v=5"></script>
 </head>
 <body>
 <header class="site-header">
@@ -48,8 +47,17 @@
         <div class="hero-actions"><a class="hero-primary" href="#booklets">ابدأ التعلّم <span aria-hidden="true">←</span></a><a class="hero-secondary" href="#booklets">تصفّح الكتيّبات</a></div>
       </div>
       <div class="hero-visual" id="plants" aria-label="نباتات طبية ثلاثية الأبعاد تتحرك في شريط">
-        <div class="hero-visual-heading"><span class="eyebrow">ثلاثة نباتات · نماذج ثلاثية الأبعاد</span><span class="hero-live"><i></i> استكشف</span></div>
-        <div class="hero-3d-stage" id="hero-3d-stage" role="img" aria-label="الزنجبيل والنعناع والسيكران في شريط متحرك"></div>
+        <div class="hero-visual-heading"><span class="eyebrow">صور واقعية لثلاثة نباتات طبية</span><span class="hero-live"><i></i> استكشف</span></div>
+        <div class="hero-3d-stage" role="img" aria-label="صور نباتية واقعية للزنجبيل والنعناع والسيكران في شريط متحرك">
+          <div class="hero-plant-track">
+            <img class="hero-plant-photo" src="assets/garden-ginger-cutout.webp?v=1" alt="" fetchpriority="high">
+            <img class="hero-plant-photo" src="assets/garden-peppermint-cutout.webp?v=1" alt="" fetchpriority="high">
+            <img class="hero-plant-photo" src="assets/garden-henbane-cutout.webp?v=1" alt="" fetchpriority="high">
+            <img class="hero-plant-photo hero-plant-photo--duplicate" src="assets/garden-ginger-cutout.webp?v=1" alt="" aria-hidden="true">
+            <img class="hero-plant-photo hero-plant-photo--duplicate" src="assets/garden-peppermint-cutout.webp?v=1" alt="" aria-hidden="true">
+            <img class="hero-plant-photo hero-plant-photo--duplicate" src="assets/garden-henbane-cutout.webp?v=1" alt="" aria-hidden="true">
+          </div>
+        </div>
         <div class="hero-ticker-labels" aria-hidden="true"><span>الزنجبيل <small>GINGER</small></span><span>النعناع <small>MINT</small></span><span>السيكران <small>HENBANE</small></span></div>
       </div>
     </div>
