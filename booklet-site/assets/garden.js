@@ -10,6 +10,21 @@
   ['one','two','three','four'].forEach(function(which){var sprig=document.createElement('div');sprig.className='garden-frond garden-frond--'+which;sprig.innerHTML=frond;layer.appendChild(sprig);});
   var tree='<svg viewBox="0 0 260 430" fill="none" focusable="false"><path d="M130 430V208M130 324 73 256M130 300l57-77M129 260l-30-79m31 57 31-88m-31 6-4-53" stroke="currentColor" stroke-width="13" stroke-linecap="round"/><path d="M127 430h16" stroke="currentColor" stroke-width="8" stroke-linecap="round"/><path d="M128 43c-29-30-75-6-68 30-40 7-45 61-12 78-9 37 27 63 58 45 18 31 64 27 75-5 38 4 58-42 32-67 21-34-11-77-45-64-7-34-45-47-66-17Z" fill="currentColor" fill-opacity=".24" stroke="currentColor" stroke-width="2"/><path d="M47 112c27 10 44 30 51 57m24-126c-2 31 7 53 26 71m49-48c-26 18-40 41-44 68m59 19c-28-5-49 2-64 22M77 51c8 26 23 43 46 53" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".75"/></svg>';
   ['left','right'].forEach(function(side){var oak=document.createElement('div');oak.className='garden-tree garden-tree--'+side;oak.innerHTML=tree;layer.appendChild(oak);});
+  var shapes=document.createElement('div');
+  shapes.className='garden-3d-shapes';
+  shapes.setAttribute('aria-hidden','true');
+  var cube=document.createElement('div');
+  cube.className='garden-shape garden-shape--cube';
+  cube.innerHTML='<div class="garden-cube"><i class="garden-cube__face garden-cube__face--front"></i><i class="garden-cube__face garden-cube__face--back"></i><i class="garden-cube__face garden-cube__face--right"></i><i class="garden-cube__face garden-cube__face--left"></i><i class="garden-cube__face garden-cube__face--top"></i><i class="garden-cube__face garden-cube__face--bottom"></i></div>';
+  shapes.appendChild(cube);
+  var sphere=document.createElement('div');
+  sphere.className='garden-shape garden-shape--sphere';
+  shapes.appendChild(sphere);
+  var rings=document.createElement('div');
+  rings.className='garden-shape garden-shape--rings';
+  rings.innerHTML='<i></i><i></i><i></i>';
+  shapes.appendChild(rings);
+  layer.appendChild(shapes);
   body.insertBefore(layer,body.firstChild);
 
   /* Generate the garden ambience in Web Audio, as on the main site: no media URL. */
