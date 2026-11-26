@@ -897,7 +897,7 @@ main{position:relative;z-index:1}
 @media(max-width:360px){.hero-affiliation-mobile img{width:23px;height:23px}}
 
 /* Contact form shared with the booklet mail API */
-.site-contact{position:relative;z-index:1;scroll-margin-top:130px;margin:0 auto 34px;padding:clamp(18px,3vw,30px);border:1px solid rgba(143,199,172,.27);border-right:4px solid var(--green);border-radius:var(--radius);background:linear-gradient(130deg,rgba(21,52,50,.94),rgba(10,32,32,.98));box-shadow:0 16px 38px rgba(0,0,0,.22)}
+.site-contact{position:relative;z-index:1;scroll-margin-top:130px;margin:0 auto 34px;padding:clamp(18px,3vw,30px);border:1px solid rgba(143,199,172,.27);border-inline-start:4px solid var(--green);border-radius:var(--radius);background:linear-gradient(130deg,rgba(21,52,50,.94),rgba(10,32,32,.98));box-shadow:0 16px 38px rgba(0,0,0,.22)}
 .site-contact-grid{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);align-items:start;gap:28px}
 .site-contact-copy{min-width:0}
 .site-contact-kicker{margin:0 0 7px;color:var(--gold);font-size:11px;font-weight:800;letter-spacing:.08em}
@@ -927,6 +927,34 @@ main{position:relative;z-index:1}
 @media(max-width:780px){.site-contact-grid{grid-template-columns:1fr;gap:18px}}
 @media(max-width:500px){.site-contact{padding:16px;margin-bottom:24px}.site-contact-copy h2{font-size:22px}.site-contact-fields{grid-template-columns:1fr;gap:9px}.site-contact-field{font-size:11px}.site-contact-field input,.site-contact-field textarea{font-size:12px}.site-contact-message{margin-top:9px}.site-contact-actions{align-items:stretch;flex-direction:column;gap:8px;margin-top:10px}.site-contact-submit{align-self:flex-start;min-width:150px}}
 @media print{.site-contact{display:none!important}}
+
+/* v22 · responsive polish: easier navigation, clearer controls, balanced reading */
+.site-header{border-bottom-color:rgba(215,194,148,.22);box-shadow:0 10px 30px rgba(0,0,0,.14)}
+.header-inner{min-width:0}
+.brand{flex:0 0 auto;transition:transform .2s ease,opacity .2s ease}
+.brand:hover{transform:translateY(-1px);opacity:.96}
+.nav{min-width:0}
+.nav a{display:inline-flex;align-items:center;justify-content:center;min-height:40px}
+.nav a.is-active{box-shadow:0 4px 14px rgba(215,194,148,.16)}
+.hero h1{text-wrap:balance}
+.hero-description{text-wrap:pretty;max-width:48ch}
+.sound-toggle,.lang-button{min-height:40px}
+@media(max-width:860px){
+ .nav{justify-content:flex-start;gap:8px;padding:3px 2px 7px;overscroll-behavior-inline:contain;scroll-snap-type:x proximity;scrollbar-width:thin;scrollbar-color:rgba(216,187,130,.52) transparent;-webkit-overflow-scrolling:touch}
+ .nav::-webkit-scrollbar{height:4px}
+ .nav::-webkit-scrollbar-track{background:transparent}
+ .nav::-webkit-scrollbar-thumb{border-radius:999px;background:rgba(216,187,130,.52)}
+ .nav a{flex:0 0 auto;scroll-snap-align:center}
+ .header-tools{gap:8px}
+}
+@media(max-width:640px){
+ .header-tools{gap:6px}
+ .sound-toggle,.lang-button{height:38px;min-height:38px;min-width:38px;justify-content:center}
+ .sound-toggle{padding:4px}
+ .nav{padding-inline:3px}
+}
+@media(max-width:360px){.nav{gap:6px}.nav a{padding-inline:9px}}
+@media(prefers-reduced-motion:reduce){.brand{transition:none}}
 </style>
 </head>
 <body>
