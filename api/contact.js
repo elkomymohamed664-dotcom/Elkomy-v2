@@ -1,10 +1,16 @@
 'use strict';
 
 const MAX_BODY_BYTES = 8 * 1024;
+const MAX_NAME_LENGTH = 80;
+const MAX_MESSAGE_LENGTH = 3000;
+const RATE_WINDOW_MS = 10 * 60 * 1000;
+const RATE_LIMIT = 5;
+const EMAIL_PATTERN = /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/;
 const CONTACT_SERVICE_URL = 'https://phyto-booklets.vercel.app/api/contact';
 const ALLOWED_CROSS_ORIGINS = new Set([
   'https://elkomymohamed664-dotcom.github.io'
 ]);
+const recentSubmissions = new Map();
 
 function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, function (character) {
@@ -142,6 +148,51 @@ function parseBody(req) {
   return body;
 }
 
+function validEmail(value) {
+  return typeof value === 'string' && value.length <= 254 && EMAIL_PATTERN.test(value);
+}
+
+function configuredSender(value) {
+  if (typeof value !== 'string' || /[\r\n]/.test(value)) return false;
+  const trimmed = value.trim();
+  const bracketed = trimmed.match(/<([^<>]+)>/);
+  const address = bracketed ? bracketed[1].trim() : trimmed;
+  return validEmail(address);
+}
+
+function clientIp(req) {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (typeof forwarded === 'string' && forwarded.trim()) {
+    return forwarded.split(',')[0].trim().slice(0, 64);
+  }
+  return (req.socket && req.socket.remoteAddress) || 'unknown';
+}
+
+function rateLimitExceeded(ip, now) {
+  let entry = recentSubmissions.get(ip);
+  if (!entry || now >= entry.resetAt) {
+    entry = { count: 0, resetAt: now + RATE_WINDOW_MS };
+  }
+  if (entry.count >= RATE_LIMIT) {
+    recentSubmissions.set(ip, entry);
+    return Math.max(1, Math.ceil((entry.resetAt - now) / 1000));
+  }
+
+  entry.count += 1;
+  recentSubmissions.set(ip, entry);
+  if (recentSubmissions.size > 1024) {
+    recentSubmissions.forEach(function (candidate, key) {
+      if (now >= candidate.resetAt) recentSubmissions.delete(key);
+    });
+    while (recentSubmissions.size > 1024) {
+      const oldestIp = recentSubmissions.keys().next().value;
+      if (oldestIp === undefined) break;
+      recentSubmissions.delete(oldestIp);
+    }
+  }
+  return 0;
+}
+
 module.exports = async function contactHandler(req, res) {
   if (req.method === 'OPTIONS') {
     if (!sameOrigin(req)) {
@@ -176,10 +227,79 @@ module.exports = async function contactHandler(req, res) {
     return respond(req, res, 413, { ok: false, message: 'حجم الرسالة أكبر من المسموح.' });
   }
 
+  if (typeof body.website === 'string' && body.website.trim()) {
+    return respond(req, res, 200, { ok: true, message: 'وصلت رسالتك، شكرًا لتواصلك.' });
+  }
+
+  const name = typeof body.name === 'string' ? body.name.trim() : '';
+  const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
+  const message = typeof body.message === 'string' ? body.message.trim() : '';
+  if (!name || name.length > MAX_NAME_LENGTH) {
+    return respond(req, res, 400, { ok: false, message: 'اكتب اسمًا صحيحًا لا يتجاوز ٨٠ حرفًا.' });
+  }
+  if (!validEmail(email)) {
+    return respond(req, res, 400, { ok: false, message: 'اكتب بريدًا إلكترونيًا صحيحًا.' });
+  }
+  if (!message || message.length > MAX_MESSAGE_LENGTH) {
+    return respond(req, res, 400, { ok: false, message: 'اكتب رسالة لا تتجاوز ٣٠٠٠ حرف.' });
+  }
+
+  // Prefer this project's own Resend credentials once configured; otherwise keep
+  // the existing contact service as a temporary, server-to-server fallback.
+  const apiKey = String(process.env.RESEND_API_KEY || '').trim();
+  if (apiKey) {
+    const to = String(process.env.CONTACT_TO_EMAIL || '').trim();
+    const from = String(process.env.CONTACT_FROM_EMAIL || '').trim();
+    if (!validEmail(to) || !configuredSender(from)) {
+      return respond(req, res, 503, {
+        ok: false,
+        code: 'EMAIL_NOT_CONFIGURED',
+        message: 'خدمة البريد لم تكتمل إعداداتها بعد. حاول لاحقًا.'
+      });
+    }
+
+    const retryAfter = rateLimitExceeded(clientIp(req), Date.now());
+    if (retryAfter) {
+      return respond(req, res, 429, { ok: false, message: 'تم استلام محاولات كثيرة. انتظر قليلًا ثم حاول مجددًا.' }, {
+        'Retry-After': String(retryAfter)
+      });
+    }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(function () { controller.abort(); }, 10000);
+    if (typeof timeout.unref === 'function') timeout.unref();
+    try {
+      const providerResponse = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          Authorization: 'Bearer ' + apiKey,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          from: from,
+          to: [to],
+          reply_to: email,
+          subject: 'رسالة جديدة من موقع PHYTO MOTION',
+          text: 'الاسم: ' + name + '\nالبريد الإلكتروني: ' + email + '\n\nالرسالة:\n' + message
+        }),
+        signal: controller.signal
+      });
+
+      if (!providerResponse.ok) {
+        return respond(req, res, 502, { ok: false, message: 'تعذّر إرسال الرسالة الآن. حاول مرة أخرى لاحقًا.' });
+      }
+      return respond(req, res, 200, { ok: true, message: 'وصلت رسالتك بنجاح، شكرًا لتواصلك.' });
+    } catch (error) {
+      return respond(req, res, 502, { ok: false, message: 'تعذّر الاتصال بخدمة البريد. حاول لاحقًا.' });
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
   const forwardedBody = {
-    name: body.name,
-    email: body.email,
-    message: body.message,
+    name: name,
+    email: email,
+    message: message,
     website: body.website
   };
   const headers = {
