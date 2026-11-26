@@ -131,10 +131,10 @@
     bookmarks.sort(function(a,b){return a-b;});writeStored(storageKey+':bookmarks',JSON.stringify(bookmarks));updateBookmarkControl();
   });
   if(themeButton){
-    var night=readStored(storageKey+':night','false')==='true';
-    document.body.classList.toggle('reader-night',night);
-    function updateThemeButton(){themeButton.setAttribute('aria-pressed',String(night));themeButton.textContent=night?'☼ وضع القراءة النهاري':'◐ وضع القراءة الليلي';}
-    themeButton.addEventListener('click',function(){night=!night;document.body.classList.toggle('reader-night',night);writeStored(storageKey+':night',String(night));updateThemeButton();});
+    var day=readStored(storageKey+':day','false')==='true';
+    document.body.classList.toggle('reader-day',day);
+    function updateThemeButton(){themeButton.setAttribute('aria-pressed',String(day));themeButton.textContent=day?'◐ وضع القراءة الليلي':'☼ وضع القراءة النهاري';}
+    themeButton.addEventListener('click',function(){day=!day;document.body.classList.toggle('reader-day',day);writeStored(storageKey+':day',String(day));updateThemeButton();});
     updateThemeButton();
   }
 
