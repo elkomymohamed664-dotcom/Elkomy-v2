@@ -15,12 +15,6 @@
   from{transform:translate3d(-8px,8px,0) rotate(calc(var(--tilt,0deg) - 5deg)) scale(.97)}
   to{transform:translate3d(10px,-9px,0) rotate(calc(var(--tilt,0deg) + 5deg)) scale(1.025)}
 }
-.garden-sound-toggle{position:fixed;left:16px;bottom:16px;z-index:30;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:9px 15px;border:1px solid rgba(216,187,130,.72);border-radius:999px;background:#12302c;color:#f0d7a7;font:800 12px/1.3 "IBM Plex Sans Arabic",Tahoma,Arial,sans-serif;white-space:nowrap;cursor:pointer;box-shadow:0 8px 26px rgba(0,0,0,.42);transition:border-color .18s,background .18s,color .18s,transform .18s}
-.garden-sound-toggle:hover{transform:translateY(-1px);border-color:#d8bb82;background:rgba(216,187,130,.08)}
-.garden-sound-toggle:focus-visible{outline:3px solid #f0d7a7;outline-offset:3px}
-.garden-sound-toggle svg{width:19px;height:19px;flex:0 0 19px;stroke:currentColor;fill:none;stroke-width:1.65;stroke-linecap:round;stroke-linejoin:round}
-.garden-sound-toggle[aria-pressed="true"]{border-color:rgba(165,210,179,.55);color:#c7e2cb;background:rgba(130,155,125,.11)}
-.garden-sound-toggle:disabled{opacity:.55;cursor:not-allowed}
 body>header,body>main,body>footer{position:relative;z-index:2}
 @media(max-width:760px){
   .garden-frond{opacity:.24}
@@ -31,12 +25,9 @@ body>header,body>main,body>footer{position:relative;z-index:2}
   .garden-tree--right{right:-128px}
 }
 @media(max-width:500px){
-  .garden-sound-toggle{left:12px;bottom:12px;min-height:44px;padding:8px 13px;gap:7px;font-size:11px}
-  .garden-sound-toggle svg{width:18px;height:18px;flex-basis:18px}
-}
+    }
 @media(prefers-reduced-motion:reduce){
   .garden-frond,.garden-tree{animation:none!important;transform:rotate(var(--tilt,0deg))}
 }
 @media print{
-  .garden-background,.garden-sound-toggle{display:none!important}
-}
+  .garden-background,}

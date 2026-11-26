@@ -12,22 +12,9 @@
   ['left','right'].forEach(function(side){var oak=document.createElement('div');oak.className='garden-tree garden-tree--'+side;oak.innerHTML=tree;layer.appendChild(oak);});
   body.insertBefore(layer,body.firstChild);
 
-  var button=document.createElement('button');
-  button.type='button';button.className='garden-sound-toggle';button.setAttribute('aria-pressed','true');
-  button.setAttribute('aria-label','كتم صوت الحديقة');button.title='صوت حديقة هادئ — كتم';
-  button.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4h4l5 4V6l-5 4H4Z"/><path d="M16 9a5 5 0 0 1 0 6m2-9a9 9 0 0 1 0 12"/></svg><span class="garden-sound-label">صوت الحديقة يعمل · كتم</span>';
-  body.appendChild(button);
-
   /* Generate the garden ambience in Web Audio, as on the main site: no media URL. */
   var enabled=true,ducked=false,ctx=null,master=null,chimeTimer=0,playingAudio=new Set();
   var AC=window.AudioContext||window.webkitAudioContext;
-  function announce(){
-    button.setAttribute('aria-pressed',String(enabled));
-    button.setAttribute('aria-label',enabled?'كتم صوت الحديقة':'تشغيل صوت الحديقة');
-    button.title=enabled?'صوت حديقة هادئ — كتم':'تشغيل صوت الحديقة';
-    var label=button.querySelector('.garden-sound-label');
-    if(label)label.textContent=enabled?(ctx&&ctx.state==='running'?'صوت الحديقة يعمل · كتم':'صوت الحديقة · اضغط للتشغيل'):'تشغيل صوت الحديقة';
-  }
   function makeNoise(seconds){
     var length=Math.floor(ctx.sampleRate*seconds),buffer=ctx.createBuffer(1,length,ctx.sampleRate),data=buffer.getChannelData(0),last=0;
     for(var i=0;i<length;i++){var white=Math.random()*2-1;last=(last+.02*white)/1.02;data[i]=last*3.4;}
@@ -79,16 +66,12 @@
     master.gain.setTargetAtTime(enabled?(speaking ? .035 : .15):0,ctx.currentTime,.35);
   }
   function start(){
-    if(!enabled||!initialize()){announce();return;}
-    if(ctx.state==='suspended'&&ctx.resume)ctx.resume().then(function(){updateLevel();announce();}).catch(announce);
-    else{updateLevel();announce();}
+    if(!enabled||!initialize())return;
+    if(ctx.state==='suspended'&&ctx.resume)ctx.resume().then(updateLevel).catch(function(){});
+    else updateLevel();
   }
   function setDucked(value){ducked=!!value;updateLevel();}
-  button.addEventListener('click',function(){
-    enabled=!enabled;
-    if(enabled)start();else{updateLevel();announce();}
-  });
-  function resumeAfterGesture(event){if(!enabled||event.target===button)return;start();}
+  function resumeAfterGesture(){if(enabled)start();}
   document.addEventListener('pointerdown',resumeAfterGesture,{passive:true});
   document.addEventListener('keydown',resumeAfterGesture);
   document.addEventListener('play',function(event){var a=event.target;if(a&&a.tagName==='AUDIO'){playingAudio.add(a);setDucked(true);}},true);
@@ -101,5 +84,5 @@
   });
   if(window.speechSynthesis)window.setInterval(updateLevel,800);
   window.addEventListener('pagehide',function(event){if(!event.persisted&&ctx&&ctx.suspend)ctx.suspend();});
-  announce();start();
+  start();
 })();
