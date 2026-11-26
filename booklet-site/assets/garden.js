@@ -12,13 +12,9 @@
 
   var button=document.createElement('button');
   button.type='button';button.className='garden-sound-toggle';button.setAttribute('aria-pressed','false');
-  button.setAttribute('aria-label','تشغيل صوت الحديقة');button.title='تشغيل نسيم الأوراق وأجراس الريح';
-  button.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4h4l5 4V6l-5 4H4Z"/><path d="M16 9a5 5 0 0 1 0 6m2-9a9 9 0 0 1 0 12"/></svg><span class="garden-sound-label">صوت الحديقة</span>';
-  var host=document.querySelector('.reader-actions')||document.querySelector('.header-inner')||document.querySelector('.reader-header');
-  if(host){
-    if(host.classList.contains('reader-actions'))host.insertBefore(button,host.firstChild);
-    else host.appendChild(button);
-  }else{button.classList.add('garden-sound-floating');body.appendChild(button);}
+  button.setAttribute('aria-label','تشغيل صوت الحديقة');button.title='تشغيل صوت نسيم الأوراق وأجراس الريح';
+  button.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4h4l5 4V6l-5 4H4Z"/><path d="M16 9a5 5 0 0 1 0 6m2-9a9 9 0 0 1 0 12"/></svg><span class="garden-sound-label">تشغيل النسيم والأجراس</span>';
+  body.appendChild(button);
 
   var AudioContextClass=window.AudioContext||window.webkitAudioContext;
   var context=null,master=null,started=false,enabled=false,chimeTimer=null,ambientNodes=[];
@@ -29,7 +25,7 @@
     button.setAttribute('aria-label',enabled?'كتم صوت الحديقة':'تشغيل صوت الحديقة');
     button.title=enabled?'كتم نسيم الأوراق وأجراس الريح':'تشغيل نسيم الأوراق وأجراس الريح';
     var label=button.querySelector('.garden-sound-label');
-    if(label)label.textContent=enabled?'صوت الحديقة يعمل':'صوت الحديقة';
+    if(label)label.textContent=enabled?'النسيم والأجراس يعملان':'تشغيل النسيم والأجراس';
   }
   function makeBrownNoise(seconds){
     var length=Math.max(1,Math.floor(context.sampleRate*seconds));
@@ -43,7 +39,7 @@
     started=true;
     master=context.createGain();master.gain.value=.0001;master.connect(context.destination);
     var noise=makeBrownNoise(4);
-    [[430,.041,.055,135,.018],[1460,.019,.031,390,.009]].forEach(function(cfg){
+    [[430,.14,.055,135,.045],[1460,.075,.031,390,.024]].forEach(function(cfg){
       var source=context.createBufferSource();source.buffer=noise;source.loop=true;
       var filter=context.createBiquadFilter();filter.type='bandpass';filter.frequency.value=cfg[0];filter.Q.value=.55;
       var gain=context.createGain();gain.gain.value=.0001;
@@ -88,7 +84,7 @@
     if(!AudioContextClass){button.disabled=true;button.setAttribute('aria-label','الصوت غير مدعوم في هذا المتصفح');var label=button.querySelector('.garden-sound-label');if(label)label.textContent='الصوت غير متاح';return Promise.reject(new Error('Web Audio unavailable'));}
     try{if(!context)context=new AudioContextClass();buildGarden();}
     catch(error){button.disabled=true;return Promise.reject(error);}
-    return (context.state==='suspended'?context.resume():Promise.resolve()).then(function(){if(enabled)setLevel(.8);scheduleChime();});
+    return (context.state==='suspended'?context.resume():Promise.resolve()).then(function(){if(enabled){setLevel(.72);makeBell(659.25,2.4,0,.045);makeBell(987.77,1.8,.28,.018);}scheduleChime();});
   }
   button.addEventListener('click',function(){
     if(!AudioContextClass){audioStart().catch(function(){});return;}
