@@ -4,13 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#081e1f">
-  <meta name="description" content="استكشف إصدارات التوعية النباتية من كلية الصيدلة بجامعة المنصورة الأهلية: دليل المريض ومرجع أكاديمي كامل.">
-  <meta property="og:title" content="الإصدارات العلمية | PHYTO MOTION">
-  <meta property="og:description" content="إصدارات علمية وتوعوية عن أمان النباتات الطبية في السفر والحركة.">
-  <meta property="og:type" content="website">
+  <meta name="description" content="إصدارات التوعية النباتية من كلية الصيدلة بجامعة المنصورة الأهلية: دليل المريض ومرجع أكاديمي كامل.">
   <title>الإصدارات العلمية | كلية الصيدلة - جامعة المنصورة الأهلية</title>
   <link rel="stylesheet" href="assets/portal.css">
-  <script src="assets/portal.js" defer></script>
 </head>
 <body>
 <header class="site-header">
@@ -21,96 +17,132 @@
         <img src="assets/academic-logos/faculty-pharmacy.webp" alt="" width="48" height="48">
         <img src="assets/academic-logos/pharmacognosy.webp" alt="" width="48" height="48">
       </div>
-      <div class="academic-copy"><strong>جامعة المنصورة الأهلية</strong><span>كلية الصيدلة · قسم العقاقير</span></div>
+      <div class="academic-copy">
+        <strong>جامعة المنصورة الأهلية</strong>
+        <span>كلية الصيدلة · قسم العقاقير</span>
+      </div>
     </div>
-    <a class="program-lockup" href="index.html" aria-label="PHYTO MOTION — الصفحة الرئيسية">
+    <a class="program-lockup" href="index.html" aria-label="PHYTO MOTION — العودة إلى بوابة الإصدارات">
       <svg class="program-mark" viewBox="0 0 43 50" aria-hidden="true"><path d="M21.5 46V18M21.5 34C6 35 5 19 5 19c13-1 18 7 16.5 15ZM21.5 26C37 27 38 10 38 10c-13-1-18 8-16.5 16ZM21.5 18C11 16 14 3 14 3c10 2 11 9 7.5 15Z"/><path d="m10 24 11.5 10M33 15 21.5 26M8 45h27"/></svg>
       <span><strong>PHYTO MOTION</strong><small>نشاط العلاج بالنباتات الطبية</small></span>
     </a>
   </div>
 </header>
-<main>
-  <section class="hero wrap" aria-labelledby="hero-title">
-    <div class="hero-copy-block">
-      <p class="eyebrow"><span></span> إصدارات علمية وتوعوية</p>
-      <h1 id="hero-title">معرفة نباتية،<br><em>لاختيار أكثر وعيًا.</em></h1>
-      <p class="hero-copy">إصداران متكاملان عن أمان النباتات الطبية في السفر والحركة؛ دليل واضح للمريض والزائر، ومرجع أكاديمي للطبيب والصيدلي.</p>
-      <div class="hero-actions">
-        <a class="button button-primary" href="#library">استكشف الإصدارات <span aria-hidden="true">↓</span></a>
-        <a class="text-link" href="#about">عن هذه الإصدارات <span aria-hidden="true">←</span></a>
+<main class="wrap">
+  <section class="hero" aria-labelledby="hero-title">
+    <p class="eyebrow">إصدارات علمية وتوعوية</p>
+    <h1 id="hero-title">أمان النباتات الطبية<br><em>في السفر والحركة</em></h1>
+    <p class="hero-copy">إصداران متكاملان من نشاط العلاج بالنباتات الطبية: دليل إرشادي للمريض والزائر، ومرجع أكاديمي للطبيب والصيدلي.</p>
+    <div class="hero-rule"><span></span><p>كلية الصيدلة · جامعة المنصورة الأهلية</p><span></span></div>
+  </section>
+
+  <section class="welcome-audio" aria-labelledby="welcome-audio-title">
+    <div class="welcome-audio-copy">
+      <span class="welcome-audio-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 10v4h4l5 4V6l-5 4H4Z"/><path d="M16 9a5 5 0 0 1 0 6m2-9a9 9 0 0 1 0 12"/></svg></span>
+      <div><h2 id="welcome-audio-title">إرشاد صوتي لاختيار الإصدار</h2><p>الكتيّب الأول للمريض والزائر، والمرجع الثاني للطبيب أو الصيدلي.</p></div>
+    </div>
+    <button class="welcome-audio-button" id="welcome-audio-button" type="button" aria-pressed="false"><span id="welcome-audio-button-label">استمع إلى الإرشاد</span></button>
+    <audio id="welcome-audio" src="assets/audio/patient-welcome-ar-eg.mp3" preload="auto" aria-hidden="true"></audio>
+    <p class="welcome-audio-status" id="welcome-audio-status" role="status" aria-live="polite">قد يمنع المتصفح التشغيل التلقائي للصوت؛ إذا لم تسمع الإرشاد، اضغط «استمع إلى الإرشاد».</p>
+  </section>
+
+  <section class="book-grid" aria-label="اختيار الإصدار">
+    <a class="book-card patient" href="patient-book.html" aria-label="قراءة دليل المريض والزائر، ٨ صفحات كاملة">
+      <span class="cover-frame"><img src="assets/patient-pages/page-01.jpg" alt="غلاف دليل الاستخدام الآمن للأعشاب في دوار السفر والحركة" width="1192" height="1686" fetchpriority="high"></span>
+      <span class="book-copy">
+        <span class="book-type">دليل إرشادي · للمرضى والزائرين</span>
+        <h2>دليل الاستخدام الآمن للأعشاب</h2>
+        <p>دليل عربي متكامل يعرّف بدوار السفر والحركة، والمستحضرات النباتية، وأهم احتياطات الاستخدام الآمن.</p>
+        <span class="book-meta"><span>٨ صفحات كاملة</span><span>اللغة العربية</span></span>
+        <span class="book-open">قراءة الدليل <b aria-hidden="true">←</b></span>
+      </span>
+    </a>
+
+    <a class="book-card professional" href="clinician-book.html" aria-label="قراءة المرجع الأكاديمي للطبيب والصيدلي، ٤ صفحات كاملة">
+      <span class="cover-frame"><img src="assets/clinician-pages/page-01.jpg" alt="غلاف المرجع الأكاديمي Medicinal Plants in Motion" width="1192" height="1686" fetchpriority="high"></span>
+      <span class="book-copy">
+        <span class="book-type">مرجع أكاديمي · للأطباء والصيادلة</span>
+        <h2>Medicinal Plants in Motion</h2>
+        <p>مرجع علمي متكامل في العقاقير والكيمياء النباتية والدوائيات وسلامة الزنجبيل والنعناع والسيكران.</p>
+        <span class="book-meta"><span>٤ صفحات كاملة</span><span>إنجليزي / عربي</span></span>
+        <span class="book-open">قراءة المرجع <b aria-hidden="true">←</b></span>
+      </span>
+    </a>
+  </section>
+
+  <section class="contributors" aria-labelledby="contributors-title">
+    <div class="contributors-heading">
+      <div>
+        <p class="eyebrow">فريق العمل والإشراف</p>
+        <h2 id="contributors-title">الأسماء وراء هذا العمل</h2>
+        <p>إصدارات علمية وتوعوية أُعدّت بجهد فريق النشاط وتحت إشراف أكاديمي.</p>
       </div>
-      <p class="hero-affiliation">من كلية الصيدلة · جامعة المنصورة الأهلية</p>
+      <span class="contributors-ornament" aria-hidden="true"><svg viewBox="0 0 48 48"><path d="M24 5v38M5 24h38M10.6 10.6l26.8 26.8m0-26.8L10.6 37.4"/><circle cx="24" cy="24" r="8"/></svg></span>
     </div>
-    <div class="hero-art" aria-hidden="true">
-      <div class="art-orbit orbit-one"></div><div class="art-orbit orbit-two"></div>
-      <svg class="hero-leaf" viewBox="0 0 260 310" fill="none"><path d="M130 288V88" stroke="currentColor" stroke-width="3"/><path d="M129 208C69 226 26 181 37 125c53 1 98 28 92 83Z" fill="currentColor" fill-opacity=".16" stroke="currentColor" stroke-width="2"/><path d="M130 208 49 137M130 159c61 20 105-23 94-78-53 0-98 27-94 78Z" fill="currentColor" fill-opacity=".11" stroke="currentColor" stroke-width="2"/><path d="m130 159 81-68M129 104C86 93 82 47 108 20c37 23 48 53 21 84Z" fill="currentColor" fill-opacity=".2" stroke="currentColor" stroke-width="2"/><path d="m129 104-19-69M130 287l-31 13m31-13 31 13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-      <div class="art-caption"><span>PHYTO MOTION</span><small>PLANTS · EVIDENCE · SAFETY</small></div>
-      <span class="art-index">01 / 02</span>
+
+    <div class="contributors-panel">
+      <section class="contributors-group" aria-labelledby="supervisors-title">
+        <div class="contributors-group-heading">
+          <span class="group-step" aria-hidden="true">١</span>
+          <div><h3 id="supervisors-title">تحت الإشراف الأكاديمي</h3><p>خبرة علمية تدعم دقة المحتوى وسلامته.</p></div>
+        </div>
+        <ul class="supervisor-grid">
+          <li class="supervisor-card"><span class="supervisor-mark" aria-hidden="true">أ.م.د</span><span class="supervisor-copy"><span class="person-role">أستاذ مساعد</span><strong>أحمد السيد بدير البرماوي</strong></span></li>
+          <li class="supervisor-card"><span class="supervisor-mark" aria-hidden="true">د.</span><span class="supervisor-copy"><span class="person-role">مدرس</span><strong>عبد الله محمد هيكل</strong></span></li>
+          <li class="supervisor-card"><span class="supervisor-mark" aria-hidden="true">ص.</span><span class="supervisor-copy"><span class="person-role">صيدلانية</span><strong>منة القناوي</strong></span></li>
+        </ul>
+      </section>
+
+      <section class="contributors-group team-group" aria-labelledby="team-title">
+        <div class="contributors-group-heading">
+          <span class="group-step" aria-hidden="true">٢</span>
+          <div><h3 id="team-title">إعداد فريق العمل</h3><p>فريق نشاط العلاج بالنباتات الطبية.</p></div>
+          <span class="team-count"><strong>١٠</strong><span>أعضاء</span></span>
+        </div>
+        <ul class="team-grid">
+          <li class="team-member"><span class="team-index" aria-hidden="true">٠١</span><span>محمد محمد خالد الكومي</span></li>
+          <li class="team-member"><span class="team-index" aria-hidden="true">٠٢</span><span>محمد عادل القللي</span></li>
+          <li class="team-member"><span class="team-index" aria-hidden="true">٠٣</span><span>محمد مصطفى المسيري</span></li>
+          <li class="team-member"><span class="team-index" aria-hidden="true">٠٤</span><span>محمد أشرف القصبي</span></li>
+          <li class="team-member"><span class="team-index" aria-hidden="true">٠٥</span><span>محمد شاهين شاهين</span></li>
+          <li class="team-member"><span class="team-index" aria-hidden="true">٠٦</span><span>محمد سامح بليح</span></li>
+          <li class="team-member"><span class="team-index" aria-hidden="true">٠٧</span><span>محمد محمود زيادة</span></li>
+          <li class="team-member"><span class="team-index" aria-hidden="true">٠٨</span><span>نور أيمن محمد محمد</span></li>
+          <li class="team-member"><span class="team-index" aria-hidden="true">٠٩</span><span>ندى عبد الوهاب محمود</span></li>
+          <li class="team-member"><span class="team-index" aria-hidden="true">١٠</span><span>نورسين محمود محمد</span></li>
+        </ul>
+      </section>
     </div>
-    <div class="hero-bottomline"><span>العقاقير والنباتات الطبية</span><span>استكشف المكتبة <b aria-hidden="true">↓</b></span></div>
   </section>
 
-  <section class="facts-band" aria-label="ملخص الإصدارات">
-    <div class="wrap facts-inner">
-      <div class="fact"><strong>٢</strong><span>إصداران كاملان</span></div>
-      <div class="fact"><strong>١٢</strong><span>صفحة مصدرية</span></div>
-      <div class="fact"><strong>٢</strong><span>فئتان من القرّاء</span></div>
-      <p>الصفحات محفوظة محليًا · دون اعتماد على خدمة خارجية</p>
+  <section class="contact-section" aria-labelledby="contact-title">
+    <div class="contact-copy">
+      <p class="eyebrow">تواصل معنا</p>
+      <h2 id="contact-title">يسعدنا استقبال استفسارك</h2>
+      <p>أرسل سؤالك أو ملاحظتك إلى فريق النشاط، وسنستخدم بياناتك للرد على رسالتك فقط.</p>
+      <div class="contact-note"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 6.5h17v11h-17z"/><path d="m4 7 8 6 8-6"/></svg><span>من فضلك لا ترسل معلومات صحية شخصية أو بيانات شديدة الخصوصية عبر النموذج.</span></div>
     </div>
-  </section>
-
-  <section class="library-section wrap" id="library" aria-labelledby="library-title">
-    <div class="section-heading">
-      <div><p class="eyebrow">المكتبة العلمية</p><h2 id="library-title">اختر الإصدار المناسب لك</h2><p>اقرأ الصفحات الأصلية كاملة، مع نص قابل للبحث والنسخ داخل كل صفحة.</p></div>
-      <span class="section-number" aria-hidden="true">01 <i>/</i> 02</span>
-    </div>
-    <div class="library-tools" role="search">
-      <label class="search-box" for="book-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg><input id="book-search" type="search" placeholder="ابحث بعنوان الإصدار أو موضوعه" autocomplete="off"><kbd>/</kbd></label>
-      <div class="filter-group" role="group" aria-label="تصفية حسب نوع الإصدار">
-        <button class="filter-button is-active" type="button" data-filter="all" aria-pressed="true">الكل <span>٢</span></button>
-        <button class="filter-button" type="button" data-filter="patient" aria-pressed="false">دليل المريض</button>
-        <button class="filter-button" type="button" data-filter="academic" aria-pressed="false">مرجع أكاديمي</button>
+    <form class="contact-form" id="contact-form" action="/api/contact" method="post">
+      <div class="contact-fields">
+        <label class="contact-field" for="contact-name"><span>الاسم</span><input id="contact-name" name="name" type="text" autocomplete="name" maxlength="80" required></label>
+        <label class="contact-field" for="contact-email"><span>البريد الإلكتروني</span><input id="contact-email" name="email" type="email" inputmode="email" autocomplete="email" maxlength="254" required></label>
       </div>
-    </div>
-    <p class="search-status" id="search-status" aria-live="polite"></p>
-
-    <div class="book-grid" id="book-grid">
-      <article class="book-card patient" data-edition="patient" data-search="دليل المريض الزائر الاستخدام الآمن الأعشاب دوار السفر الحركة الغثيان الزنجبيل النعناع السيكران عربي">
-        <a class="cover-frame" href="patient-book.html" aria-label="افتح دليل المريض والزائر"><img src="assets/patient-pages/page-01.jpg" alt="غلاف دليل الاستخدام الآمن للأعشاب في دوار السفر والحركة" width="1192" height="1686" fetchpriority="high"></a>
-        <div class="book-copy">
-          <div class="book-overline"><span class="edition-dot"></span><span class="book-type">دليل إرشادي</span><span class="edition-label">للمرضى والزائرين</span></div>
-          <h3><a href="patient-book.html">دليل الاستخدام الآمن للأعشاب</a></h3>
-          <p>دليل عربي متكامل يعرّف بدوار السفر والحركة، والمستحضرات النباتية، وأهم احتياطات الاستخدام.</p>
-          <div class="book-meta"><span>٨ صفحات كاملة</span><span>اللغة العربية</span></div>
-          <a class="book-open" href="patient-book.html">اقرأ دليل المريض <b aria-hidden="true">←</b></a>
-        </div>
-      </article>
-
-      <article class="book-card academic" data-edition="academic" data-search="مرجع أكاديمي طبيب صيدلي Medicinal Plants in Motion ginger peppermint Hyoscyamus pharmacognosy chemistry pharmacology safety English Arabic">
-        <a class="cover-frame" href="clinician-book.html" aria-label="افتح المرجع الأكاديمي"><img src="assets/clinician-pages/page-01.jpg" alt="غلاف المرجع الأكاديمي Medicinal Plants in Motion" width="1192" height="1686" loading="lazy"></a>
-        <div class="book-copy">
-          <div class="book-overline"><span class="edition-dot"></span><span class="book-type">مرجع أكاديمي</span><span class="edition-label">للأطباء والصيادلة</span></div>
-          <h3><a href="clinician-book.html">Medicinal Plants in Motion</a></h3>
-          <p>مرجع متخصص في العقاقير والكيمياء النباتية والدوائيات وسلامة الزنجبيل والنعناع والسيكران.</p>
-          <div class="book-meta"><span>٤ صفحات كاملة</span><span>إنجليزي / عربي</span></div>
-          <a class="book-open" href="clinician-book.html">اقرأ المرجع الأكاديمي <b aria-hidden="true">←</b></a>
-        </div>
-      </article>
-    </div>
-    <div class="empty-state" id="empty-state" hidden><strong>لم نعثر على إصدار مطابق.</strong><span>جرّب كلمة أخرى أو اعرض كل الإصدارات.</span><button type="button" id="reset-search">عرض كل الإصدارات</button></div>
+      <label class="contact-field contact-message-field" for="contact-message"><span>رسالتك</span><textarea id="contact-message" name="message" rows="4" maxlength="3000" required></textarea></label>
+      <div class="contact-honeypot" aria-hidden="true"><label for="contact-website">اترك هذا الحقل فارغًا</label><input id="contact-website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
+      <div class="contact-actions">
+        <button class="contact-submit" type="submit"><span>إرسال الرسالة</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 5l7 7-7 7"/></svg></button>
+        <p class="contact-status" id="contact-status" role="status" aria-live="polite" aria-atomic="true"></p>
+      </div>
+      <noscript><p class="contact-noscript">فعّل JavaScript لإرسال الرسالة من هذا النموذج.</p></noscript>
+    </form>
   </section>
 
-  <section class="about-section" id="about">
-    <div class="wrap about-inner">
-      <div class="about-mark" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M32 57V20M32 39C12 40 11 20 11 20c16-1 23 9 21 19ZM32 30C51 31 53 11 53 11 37 10 30 19 32 30ZM32 20C19 18 22 5 22 5c12 2 13 9 10 15Z"/></svg></div>
-      <div><p class="eyebrow">عن الإصدارات</p><h2>العلم أولًا، والقرار الواعي دائمًا.</h2><p>تجمع هذه الإصدارات التوعية العامة والمراجعة الأكاديمية حول النباتات الطبية المرتبطة بدوار السفر والحركة. المحتوى للتثقيف، ولا يحل محل النشرات المعتمدة أو استشارة المختص.</p></div>
-      <a class="button button-outline" href="patient-book.html">ابدأ بدليل المريض <span aria-hidden="true">←</span></a>
-    </div>
-  </section>
-  <aside class="editorial-note wrap"><span class="note-mark" aria-hidden="true">!</span><p><strong>تنويه علمي:</strong> المحتوى للتثقيف والتوعية، ولا يُعد تشخيصًا أو توصية علاجية. يُرجى الرجوع إلى النشرات المعتمدة واستشارة الطبيب أو الصيدلي عند الحاجة.</p></aside>
+  <aside class="editorial-note"><span class="note-mark" aria-hidden="true">i</span><p><strong>تنويه علمي:</strong> المحتوى للتثقيف والتوعية، ولا يُعد تشخيصًا أو توصية علاجية. يُرجى الرجوع إلى النشرات المعتمدة واستشارة الطبيب أو الصيدلي عند الحاجة.</p></aside>
 </main>
-<footer class="site-footer">
-  <div class="wrap footer-inner"><span>جامعة المنصورة الأهلية · كلية الصيدلة · قسم العقاقير</span><a href="#library">العودة إلى الإصدارات <b aria-hidden="true">↑</b></a></div>
+<footer class="wrap site-footer">
+  <span>جامعة المنصورة الأهلية · كلية الصيدلة · قسم العقاقير</span>
+  <a href="index.html">العودة إلى بوابة الإصدارات</a>
 </footer>
+<script src="assets/portal.js" defer></script>
 </body>
 </html>

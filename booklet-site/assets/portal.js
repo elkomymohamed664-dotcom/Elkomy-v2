@@ -1,53 +1,111 @@
 (function(){
   'use strict';
-  var search=document.getElementById('book-search');
-  var cards=Array.prototype.slice.call(document.querySelectorAll('.book-card[data-edition]'));
-  var filters=Array.prototype.slice.call(document.querySelectorAll('[data-filter]'));
-  var status=document.getElementById('search-status');
-  var empty=document.getElementById('empty-state');
-  var reset=document.getElementById('reset-search');
-  if(!search||!cards.length)return;
 
-  var activeFilter='all';
-  function normalize(value){
-    return String(value||'').toLocaleLowerCase('ar').normalize('NFD')
-      .replace(/[\u064b-\u065f\u0670\u0640]/g,'').replace(/\s+/g,' ').trim();
+  var audio=document.getElementById('welcome-audio');
+  var button=document.getElementById('welcome-audio-button');
+  var label=document.getElementById('welcome-audio-button-label');
+  var status=document.getElementById('welcome-audio-status');
+  if(!audio||!button)return;
+
+  function setPlaying(playing){
+    button.setAttribute('aria-pressed',String(playing));
+    if(label)label.textContent=playing?'إيقاف الإرشاد مؤقتًا':'استمع إلى الإرشاد';
   }
-  function update(){
-    var query=normalize(search.value);
-    var visible=0;
-    cards.forEach(function(card){
-      var text=normalize((card.getAttribute('data-search')||'')+' '+card.textContent);
-      var matchesEdition=activeFilter==='all'||card.getAttribute('data-edition')===activeFilter;
-      var matchesQuery=!query||text.indexOf(query)!==-1;
-      var show=matchesEdition&&matchesQuery;
-      card.hidden=!show;
-      if(show)visible++;
-    });
-    empty.hidden=visible!==0;
-    status.textContent=(query||activeFilter!=='all')?'عدد الإصدارات المطابقة: '+new Intl.NumberFormat('ar-EG').format(visible):'';
+
+  function explainBlockedPlayback(){
+    setPlaying(false);
+    if(status)status.textContent='قد يمنع المتصفح التشغيل التلقائي. اضغط «استمع إلى الإرشاد» لتشغيله يدويًا.';
   }
-  filters.forEach(function(button){
-    button.addEventListener('click',function(){
-      activeFilter=button.getAttribute('data-filter')||'all';
-      filters.forEach(function(item){
-        var active=item===button;
-        item.classList.toggle('is-active',active);
-        item.setAttribute('aria-pressed',String(active));
-      });
-      update();
-    });
-  });
-  search.addEventListener('input',update);
-  if(reset)reset.addEventListener('click',function(){
-    search.value='';activeFilter='all';
-    filters.forEach(function(item){var active=item.getAttribute('data-filter')==='all';item.classList.toggle('is-active',active);item.setAttribute('aria-pressed',String(active));});
-    update();search.focus();
-  });
-  document.addEventListener('keydown',function(event){
-    if(event.key==='/'&&!event.ctrlKey&&!event.metaKey&&!event.altKey&&!/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)){
-      event.preventDefault();search.focus();
+
+  function playWelcome(){
+    var result;
+    try{result=audio.play();}
+    catch(error){explainBlockedPlayback();return;}
+    if(result&&typeof result.then==='function'){
+      result.then(function(){
+        setPlaying(true);
+        if(status)status.textContent='يُشغَّل الآن إرشاد اختيار الإصدار.';
+      }).catch(explainBlockedPlayback);
+    }else{
+      window.setTimeout(function(){if(audio.paused)explainBlockedPlayback();},350);
     }
-    if(event.key==='Escape'&&document.activeElement===search){search.value='';update();search.blur();}
+  }
+
+  button.addEventListener('click',function(){
+    if(audio.paused){playWelcome();return;}
+    audio.pause();
+  });
+  audio.addEventListener('play',function(){
+    setPlaying(true);
+    if(status)status.textContent='يُشغّل الآن إرشاد اختيار الإصدار.';
+  });
+  audio.addEventListener('pause',function(){
+    setPlaying(false);
+    if(!audio.ended&&status)status.textContent='توقف الإرشاد مؤقتًا. اضغط الزر لاستكماله.';
+  });
+  audio.addEventListener('ended',function(){
+    setPlaying(false);
+    if(status)status.textContent='انتهى الإرشاد. يمكنك اختيار الكتيّب الأول للمريض، أو المرجع الثاني للطبيب أو الصيدلي.';
+  });
+  audio.addEventListener('error',function(){
+    setPlaying(false);
+    if(status)status.textContent='تعذّر تحميل الإرشاد الصوتي. حدّث الصفحة أو اختر الإصدار مباشرة.';
+  });
+
+  playWelcome();
+})();
+
+(function(){
+  'use strict';
+
+  var form=document.getElementById('contact-form');
+  var status=document.getElementById('contact-status');
+  if(!form||!status)return;
+
+  var submit=form.querySelector('button[type="submit"]');
+  var submitLabel=submit&&submit.querySelector('span');
+  var originalLabel=submitLabel?submitLabel.textContent:'إرسال الرسالة';
+
+  function showStatus(message,state){
+    status.textContent=message;
+    status.setAttribute('data-state',state||'');
+  }
+
+  form.addEventListener('submit',function(event){
+    event.preventDefault();
+    if(!form.reportValidity())return;
+
+    var fields=new FormData(form);
+    var payload={
+      name:fields.get('name'),
+      email:fields.get('email'),
+      message:fields.get('message'),
+      website:fields.get('website')
+    };
+    if(submit)submit.disabled=true;
+    if(submitLabel)submitLabel.textContent='جارٍ الإرسال…';
+    showStatus('جارٍ إرسال رسالتك…','');
+
+    window.fetch(form.action,{
+      method:'POST',
+      credentials:'same-origin',
+      headers:{'Content-Type':'application/json','Accept':'application/json'},
+      body:JSON.stringify(payload)
+    }).then(function(response){
+      return response.json().catch(function(){return {};}).then(function(data){
+        if(!response.ok||!data.ok){
+          var error=new Error(data.message||'تعذّر إرسال الرسالة الآن. حاول لاحقًا.');
+          error.publicMessage=data.message||'تعذّر إرسال الرسالة الآن. حاول لاحقًا.';
+          throw error;
+        }
+        form.reset();
+        showStatus(data.message||'وصلت رسالتك بنجاح، شكرًا لتواصلك.','success');
+      });
+    }).catch(function(error){
+      showStatus(error&&error.publicMessage||'تعذّر الاتصال بخدمة البريد. تحقق من الاتصال وحاول مرة أخرى.','error');
+    }).finally(function(){
+      if(submit)submit.disabled=false;
+      if(submitLabel)submitLabel.textContent=originalLabel;
+    });
   });
 })();
