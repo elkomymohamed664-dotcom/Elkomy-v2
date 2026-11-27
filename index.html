@@ -2996,6 +2996,7 @@ document.addEventListener('click',function(e){
   var btn = document.getElementById('sound-toggle');
   var enabled = true;
   var ctx = null, master = null, airNodes = [], chimeTimer = null, armed = false;
+  var soundWakeClick = false, soundWakeTimer = null;
   var offTimer = null;
 
   function audio() {
@@ -3122,7 +3123,12 @@ document.addEventListener('click',function(e){
   }
 
   /* browsers only allow audio after a gesture: arm it, then it simply keeps running */
-  function firstGesture() {
+  function firstGesture(e) {
+    if (e && e.target && e.target.closest && e.target.closest('#sound-toggle')) {
+      soundWakeClick = true;
+      clearTimeout(soundWakeTimer);
+      soundWakeTimer = setTimeout(function () { soundWakeClick = false; }, 1200);
+    }
     audio();
     if (!armed) {
       armed = true;
@@ -3146,6 +3152,18 @@ document.addEventListener('click',function(e){
     btn.setAttribute('aria-pressed', enabled ? 'true' : 'false');
     btn.addEventListener('click', function (e) {
       e.stopPropagation();
+      if (soundWakeClick) {
+        soundWakeClick = false;
+        clearTimeout(soundWakeTimer);
+        enabled = true;
+        btn.setAttribute('aria-pressed', 'true');
+        btn.setAttribute('aria-label', 'إيقاف صوت الموقع');
+        btn.setAttribute('title', 'صوت الحديقة شغال — اضغط للكتم');
+        var wakeContext = audio();
+        if (wakeContext && master) master.gain.setTargetAtTime(0.9, wakeContext.currentTime, 0.08);
+        say('صوت الحديقة رجع — نسيم وأجراس خفيفة.');
+        return;
+      }
       enabled = !enabled;
       btn.setAttribute('aria-pressed', enabled ? 'true' : 'false');
       btn.setAttribute('aria-label', enabled ? 'إيقاف صوت الموقع' : 'تشغيل صوت الموقع');
