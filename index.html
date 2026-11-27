@@ -3009,7 +3009,7 @@ document.addEventListener('click',function(e){
       master.connect(ctx.destination);
       startGarden();
     }
-    if (ctx.state === 'suspended' && ctx.resume) { try { ctx.resume(); } catch (e) {} }
+    if (ctx.state === 'suspended' && ctx.resume) { try { ctx.resume().catch(function () {}); } catch (e) {} }
     return ctx;
   }
 
@@ -3129,10 +3129,18 @@ document.addEventListener('click',function(e){
       clearTimeout(soundWakeTimer);
       soundWakeTimer = setTimeout(function () { soundWakeClick = false; }, 1200);
     }
-    audio();
+    var c = audio();
     if (!armed) {
       armed = true;
-      if (enabled) wood(523.25, 0.5, 0, 0.014);
+      if (enabled && c) {
+        var resumed = c.state === 'running' ? Promise.resolve() : (c.resume ? c.resume() : Promise.resolve());
+        if (resumed && resumed.then) resumed.then(function () {
+          if (!enabled) return;
+          if (master) master.gain.setTargetAtTime(0.9, c.currentTime, 0.08);
+          wood(659.25, 0.38, 0, 0.07);
+          wood(880, 0.42, 0.1, 0.05);
+        }).catch(function () {});
+      }
     }
     document.removeEventListener('pointerdown', firstGesture, true);
     document.removeEventListener('keydown', firstGesture, true);
